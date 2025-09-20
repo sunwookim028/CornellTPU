@@ -1,2 +1,2 @@
 # CornellTPU
-The Cornell TPU; Or maybe Big Red Unit (BRU)?
+The Cornell TPU; or maybe the Big Red Unit (BRU)?
