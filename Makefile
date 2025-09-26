@@ -16,7 +16,7 @@ export PYTHONPATH := test:$(PYTHONPATH)
 
 #=============== MODIFY BELOW ======================
 # ********** IF YOU HAVE A NEW VERILOG FILE, ADD IT TO THE SOURCES VARIABLE
-SOURCES =  src/unified_buffer.sv 
+SOURCES =  unified_buffer.sv  \ gradient_descent.sv \ fixedpoint.sv 
 #          \   src/pe.sv \
 #            src/leaky_relu_child.sv \
 #            src/leaky_relu_parent.sv \
@@ -25,13 +25,12 @@ SOURCES =  src/unified_buffer.sv
 #            src/systolic.sv \
 #             src/bias_child.sv \
 #             src/bias_parent.sv \
-#             src/fixedpoint.sv \
 #             src/control_unit.sv \
 #             src/vpu.sv \
 #             src/loss_parent.sv \
 # 		  src/loss_child.sv \
 # 		  src/tpu.sv \
-#   		  src/gradient_descent.sv
+#   		
 
 # MODIFY 1) variable next to -s 
 # MODIFY 2) variable next to $(SOURCES)
@@ -89,7 +88,7 @@ SOURCES =  src/unified_buffer.sv
 # 	mv cu.vcd waveforms/ 2>/dev/null || true
 
 test_unified_buffer: $(SIM_BUILD_DIR)
-	$(IVERILOG) -o $(SIM_VVP) -s unified_buffer -s dump -g2012 $(SOURCES) test/dump_unified_buffer.sv
+	$(IVERILOG) -o $(SIM_VVP) -s unified_buffer -s dump -g2012 $(SOURCES) dump_unified_buffer.sv
 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_unified_buffer $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
 	! grep failure results.xml
 	mv unified_buffer.vcd waveforms/ 2>/dev/null || true
