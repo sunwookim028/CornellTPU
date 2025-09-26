@@ -344,10 +344,10 @@ module unified_buffer #(
             for (int i = SYSTOLIC_ARRAY_WIDTH-1; i >= 0; i--) begin     // FOR LOOP SHOULD DECREMENT TO STORE IN ROW MAJOR ORDER!!! yooooooooo
                 if (ub_wr_valid_in[i]) begin
                     ub_memory[wr_ptr] <= ub_wr_data_in[i];
-                    wr_ptr = wr_ptr + 1;                                // I should get rid of this (not good to mix non blocking and blocking assignments) but it works for now
+                    wr_ptr <= wr_ptr + 1;                                // I should get rid of this (not good to mix non blocking and blocking assignments) but it works for now
                 end else if (ub_wr_host_valid_in[i]) begin
                     ub_memory[wr_ptr] <= ub_wr_host_data_in[i];
-                    wr_ptr = wr_ptr + 1;
+                    wr_ptr <= wr_ptr + 1;
                 end
             end
 
