@@ -1,6 +1,8 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1759353329" />
-    <testcase name="test_pe" classname="test_pe" file="/Users/tanyadatta/repos/CornellTPU/test/test_pe.py" lineno="13" time="0.0011789798736572266" sim_time_ns="90.001" ratio_time="76338.02918179981" />
+    <property name="random_seed" value="1759357842" />
+    <testcase name="test_systolic_array" classname="test_systolic" file="/home/jfols/Research/CornellTPU/CornellTPU/test/test_systolic.py" lineno="32" time="0.006472587585449219" sim_time_ns="20.001" ratio_time="3090.108822160012">
+      <failure message="Test failed with RANDOM_SEED=1759357842" />
+    </testcase>
   </testsuite>
 </testsuites>

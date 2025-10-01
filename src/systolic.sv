@@ -74,6 +74,11 @@ module systolic #(
     logic [15:0] pe_psum_out_33;
     logic [15:0] pe_psum_out_34;
 
+    logic [15:0] pe_psum_out_41;
+    logic [15:0] pe_psum_out_42;
+    logic [15:0] pe_psum_out_43;
+    logic [15:0] pe_psum_out_44;
+
 
     // weight_out for each PE (top to bottom)
     logic [15:0] pe_weight_out_11;
@@ -106,11 +111,33 @@ module systolic #(
     logic pe_switch_out_32;
     logic pe_switch_out_33;
     logic pe_switch_out_34;
+
+    logic pe_switch_out_41;
+    logic pe_switch_out_42;
+    logic pe_switch_out_43;
+    logic pe_switch_out_44;
     
     
     // valid_out for each PE (top to bottom)
     wire pe_valid_out_11;   // this wire will connect the valid signal from pe11 to pe12
     wire pe_valid_out_12;   // this wire will connect the valid signal from pe21 to pe22
+    wire pe_valid_out_13;
+    wire pe_valid_out_14;
+
+    wire pe_valid_out_21;
+    wire pe_valid_out_22;
+    wire pe_valid_out_23;
+    wire pe_valid_out_24;
+
+    wire pe_valid_out_31;
+    wire pe_valid_out_32;
+    wire pe_valid_out_33;
+    wire pe_valid_out_34;
+
+    wire pe_valid_out_41;
+    wire pe_valid_out_42;
+    wire pe_valid_out_43;
+    wire pe_valid_out_44;
 
     // PE columns to enable
     logic [3:0] pe_enabled;
@@ -456,6 +483,18 @@ pe pe11 (
         .pe_psum_out(pe_psum_out_44),
         .pe_weight_out(/* bottom-most; not used further */)
     );
+
+    // Connect bottom row of PEs to systolic output wires
+    assign sys_data_out_41 = pe_psum_out_41;
+    assign sys_data_out_42 = pe_psum_out_42;
+    assign sys_data_out_43 = pe_psum_out_43;
+    assign sys_data_out_44 = pe_psum_out_44;
+
+    assign sys_valid_out_41 = pe_valid_out_41;
+    assign sys_valid_out_42 = pe_valid_out_42;
+    assign sys_valid_out_43 = pe_valid_out_43;
+    assign sys_valid_out_44 = pe_valid_out_44;
+
 
     always@(posedge clk or posedge rst) begin
         if(rst) begin
