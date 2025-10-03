@@ -1,0 +1,9 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1759521145" />
+    <testcase name="test_leaky_relu_parent_4x2_staggered" classname="test_leaky_relu_parent" file="/home/lan64/TinyTPU/test/test_leaky_relu_parent.py" lineno="35" time="0.0027327537536621094" sim_time_ns="150.001" ratio_time="54890.05359483511" />
+    <testcase name="test_leaky_relu_parent_as_single_child" classname="test_leaky_relu_parent" file="/home/lan64/TinyTPU/test/test_leaky_relu_parent.py" lineno="242" time="0.0012688636779785156" sim_time_ns="150.001" ratio_time="118216.79712589252" />
+    <testcase name="test_leaky_relu_parent_edge_cases" classname="test_leaky_relu_parent" file="/home/lan64/TinyTPU/test/test_leaky_relu_parent.py" lineno="325" time="0.0009431838989257812" sim_time_ns="110.00099999999998" ratio_time="116627.30897472192" />
+    <testcase name="test_leaky_relu_parent_invalid_inputs" classname="test_leaky_relu_parent" file="/home/lan64/TinyTPU/test/test_leaky_relu_parent.py" lineno="401" time="0.0005888938903808594" sim_time_ns="50.00100000000003" ratio_time="84906.63737004054" />
+  </testsuite>
+</testsuites>
