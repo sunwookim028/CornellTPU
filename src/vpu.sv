@@ -112,21 +112,81 @@ module vpu (
     logic [15:0] last_H_data_1_out;
     logic [15:0] last_H_data_2_out;
 
+    // rows (batch elements) per column/neuron, output neurons
+    parameter int B      = 4; 
+    parameter int D_OUT  = 2;
+
+    // per-lane counters (you have two lanes: *_1 and *_2)
+    logic [$clog2(B    )-1:0] row_ctr_1, row_ctr_2;
+    logic [$clog2(D_OUT)-1:0] col_ctr_1, col_ctr_2;
+
+    // valid that represents entering the bias stage from sys array
+    logic sa_to_bias_valid_1, sa_to_bias_valid_2;
+
+    // Column (neuron) boundary pulses
+    logic column_start_1, column_start_2;
+
+    // Bias load enables (one-cycle pulses)
+    logic bias_load_en_1, bias_load_en_2; // two bias child instances
+
+    assign sa_to_bias_valid_1 = vpu_data_pathway[3] ? vpu_valid_in_1 : 1'b0;
+    assign sa_to_bias_valid_2 = vpu_data_pathway[3] ? vpu_valid_in_2 : 1'b0;
+
+    // row/column counters to detect the start of each neuron column
+    always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+        row_ctr_1 <= '0;  col_ctr_1 <= '0;
+        row_ctr_2 <= '0;  col_ctr_2 <= '0;
+    end else begin
+        if (sa_to_bias_valid_1) begin
+        if (row_ctr_1 == B-1) begin
+            row_ctr_1 <= '0;
+            col_ctr_1 <= (col_ctr_1 == D_OUT-1) ? '0 : col_ctr_1 + 1'b1;
+        end else begin
+            row_ctr_1 <= row_ctr_1 + 1'b1;
+        end
+        end
+
+        // Lane 2
+        if (sa_to_bias_valid_2) begin
+        if (row_ctr_2 == B-1) begin
+            row_ctr_2 <= '0;
+            col_ctr_2 <= (col_ctr_2 == D_OUT-1) ? '0 : col_ctr_2 + 1'b1;
+        end else begin
+            row_ctr_2 <= row_ctr_2 + 1'b1;
+        end
+        end
+    end
+    end
+
+    assign column_start_1 = sa_to_bias_valid_1 && (row_ctr_1 == '0);
+    assign column_start_2 = sa_to_bias_valid_2 && (row_ctr_2 == '0);
+
+    assign bias_load_en_1 = column_start_1;
+    assign bias_load_en_2 = column_start_2;
+
+
     bias_parent bias_parent_inst (  
-        .clk(clk),
-        .rst(rst),
-        .bias_sys_data_in_1(bias_data_1_in),    // input
-        .bias_sys_data_in_2(bias_data_2_in),    // input
-        .bias_sys_valid_in_1(bias_valid_1_in),  // input
-        .bias_sys_valid_in_2(bias_valid_2_in),  // input
+        .clk               ( clk ),
+        .rst               ( rst ),
 
-        .bias_scalar_in_1(bias_scalar_in_1),    // input from UB
-        .bias_scalar_in_2(bias_scalar_in_2),    // input from UB 
+        // stream from SA
+        .bias_sys_data_in_1( bias_data_1_in ),
+        .bias_sys_data_in_2( bias_data_2_in ),
+        .bias_sys_valid_in_1( bias_valid_1_in ),
+        .bias_sys_valid_in_2( bias_valid_2_in ),
 
-        .bias_Z_valid_out_1(bias_valid_1_out),  // output
-        .bias_Z_valid_out_2(bias_valid_2_out),  // output
-        .bias_z_data_out_1(bias_z_data_out_1),  // output
-        .bias_z_data_out_2(bias_z_data_out_2)   // output
+        // UB bias + load enables (NEW/renamed)
+        .bias_scalar_ub_in_1( bias_scalar_in_1 ),
+        .bias_scalar_ub_in_2( bias_scalar_in_2 ),
+        .bias_load_en_1     ( bias_load_en_1 ),
+        .bias_load_en_2     ( bias_load_en_2 ),
+
+        // outputs
+        .bias_Z_valid_out_1 ( bias_valid_1_out ),
+        .bias_Z_valid_out_2 ( bias_valid_2_out ),
+        .bias_z_data_out_1  ( bias_z_data_out_1 ),
+        .bias_z_data_out_2  ( bias_z_data_out_2 )
     );
 
 

@@ -4,23 +4,34 @@
 module bias_child (
     input logic clk,
     input logic rst,
-
-    input logic signed [15:0] bias_scalar_in, // bias scalars fetched from the unified buffer (rename it to bias_scalar_ub_in)
+    // bias scalars fetched from the unified buffer (renamd from bias_scalar_in)
+    input logic bias_load_en,
+    input logic signed [15:0] bias_scalar_ub_in, 
     output logic bias_Z_valid_out, 
     input wire signed [15:0] bias_sys_data_in, // data from systolic array
     input wire bias_sys_valid_in, // valid signal from the systolic array
+    input logic load_new_bias, // NEW SIGNAL
 
     output logic signed [15:0] bias_z_data_out
 );
     // output of the bias operation
     logic signed [15:0] z_pre_activation; 
 
+    logic signed [15:0] bias_reg;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            bias_reg <= 16'sd0;
+        end else if (bias_load_en) begin
+            bias_reg <= bias_scalar_ub_in;
+        end
+    end
+
     fxp_add add_inst(
         .ina(bias_sys_data_in),
-        .inb(bias_scalar_in),
+        .inb(bias_reg),
         .out(z_pre_activation)
     );
-    // TODO: we only switch bias values for EACH layer!!!! maybe change logic herer
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
