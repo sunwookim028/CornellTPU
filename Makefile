@@ -45,6 +45,12 @@ test_systolic: $(SIM_BUILD_DIR)
 	! grep failure results.xml
 	mv systolic.vcd waveforms/ 2>/dev/null || true
 
+test_systolic_4x4: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s systolic -s dump -g2012 $(SOURCES) test/dump_systolic_4x4.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_4x4 $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv systolic_4x4.vcd waveforms/ 2>/dev/null || true
+
 test_nn: $(SIM_BUILD_DIR)
 	$(IVERILOG) -o $(SIM_VVP) -s nn -s dump -g2012 $(SOURCES) test/dump_nn.sv
 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_nn $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)

@@ -13,7 +13,14 @@ module systolic #(
     input logic [15:0] sys_data_in_21,
     input logic [15:0] sys_data_in_31,
     input logic [15:0] sys_data_in_41,
-    input logic sys_start,    // start signal
+    // Original:  input logic sys_start    // start signal
+    // But in the test file they set sys_start_1 and sys_start_2, and never reference sys_start. I think this is a bug.
+    // The different rows should have different start signals, right? With the staggering of inputs.
+
+    input logic sys_start_1,    // start signal for row 1
+    input logic sys_start_2,    // start signal for row 2
+    input logic sys_start_3,    // start signal for row 3
+    input logic sys_start_4,    // start signal for row 4
 
     // output signals from bottom of systolic array 
     output logic [15:0] sys_data_out_41,
@@ -147,7 +154,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[0]),
 
-        .pe_valid_in(sys_start),
+        .pe_valid_in(sys_start_1),
         .pe_valid_out(pe_valid_out_11),
 
         .pe_accept_w_in(sys_accept_w_1),
@@ -233,7 +240,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[0]),
 
-        .pe_valid_in(pe_valid_out_11),
+        .pe_valid_in(sys_start_2),
         .pe_valid_out(pe_valid_out_21),
 
         .pe_accept_w_in(sys_accept_w_1),
@@ -254,7 +261,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[1]),
 
-        .pe_valid_in(pe_valid_out_12),
+        .pe_valid_in(pe_valid_out_21),
         .pe_valid_out(pe_valid_out_22),
 
         .pe_accept_w_in(sys_accept_w_2),
@@ -275,7 +282,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[2]),
 
-        .pe_valid_in(pe_valid_out_13),
+        .pe_valid_in(pe_valid_out_22),
         .pe_valid_out(pe_valid_out_23),
 
         .pe_accept_w_in(sys_accept_w_3),
@@ -296,7 +303,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[3]),
 
-        .pe_valid_in(pe_valid_out_14),
+        .pe_valid_in(pe_valid_out_23),
         .pe_valid_out(pe_valid_out_24),
 
         .pe_accept_w_in(sys_accept_w_4),
@@ -319,7 +326,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[0]),
 
-        .pe_valid_in(pe_valid_out_21),
+        .pe_valid_in(sys_start_3),
         .pe_valid_out(pe_valid_out_31),
 
         .pe_accept_w_in(sys_accept_w_1),
@@ -340,7 +347,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[1]),
 
-        .pe_valid_in(pe_valid_out_22),
+        .pe_valid_in(pe_valid_out_31),
         .pe_valid_out(pe_valid_out_32),
 
         .pe_accept_w_in(sys_accept_w_2),
@@ -361,7 +368,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[2]),
 
-        .pe_valid_in(pe_valid_out_23),
+        .pe_valid_in(pe_valid_out_32),
         .pe_valid_out(pe_valid_out_33),
 
         .pe_accept_w_in(sys_accept_w_3),
@@ -382,7 +389,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[3]),
 
-        .pe_valid_in(pe_valid_out_24),
+        .pe_valid_in(pe_valid_out_33),
         .pe_valid_out(pe_valid_out_34),
 
         .pe_accept_w_in(sys_accept_w_4),
@@ -405,7 +412,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[0]),
 
-        .pe_valid_in(pe_valid_out_31),
+        .pe_valid_in(sys_start_4),
         .pe_valid_out(pe_valid_out_41),
 
         .pe_accept_w_in(sys_accept_w_1),
@@ -426,7 +433,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[1]),
 
-        .pe_valid_in(pe_valid_out_32),
+        .pe_valid_in(pe_valid_out_41),
         .pe_valid_out(pe_valid_out_42),
 
         .pe_accept_w_in(sys_accept_w_2),
@@ -447,7 +454,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[2]),
 
-        .pe_valid_in(pe_valid_out_33),
+        .pe_valid_in(pe_valid_out_42),
         .pe_valid_out(pe_valid_out_43),
 
         .pe_accept_w_in(sys_accept_w_3),
@@ -468,7 +475,7 @@ pe pe11 (
         .rst(rst),
         .pe_enabled(pe_enabled[3]),
 
-        .pe_valid_in(pe_valid_out_34),
+        .pe_valid_in(pe_valid_out_43),
         .pe_valid_out(pe_valid_out_44),
 
         .pe_accept_w_in(sys_accept_w_4),
