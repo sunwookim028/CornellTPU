@@ -25,6 +25,7 @@ export COCOTB_REDUCED_LOG_FMT = 1
 #=============== MODIFY BELOW ======================
 # ********** IF YOU HAVE A NEW VERILOG FILE, ADD IT TO THE SOURCES VARIABLE
 SOURCES = src/leaky_relu_child.sv \
+SOURCES = src/leaky_relu_child.sv \
           src/leaky_relu_parent.sv \
           src/leaky_relu_derivative_child.sv \
           src/leaky_relu_derivative_parent.sv \
