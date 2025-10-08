@@ -147,7 +147,8 @@ module systolic #(
     wire pe_valid_out_44;
 
     // PE columns to enable
-    logic [3:0] pe_enabled;
+    logic [3:0] pe_enabled; // This should be 4'b1111 for now! But will have to change when we parametrize
+    assign pe_enabled = 4'b1111;
 
 pe pe11 (
         .clk(clk),
@@ -503,14 +504,14 @@ pe pe11 (
     assign sys_valid_out_44 = pe_valid_out_44;
 
 
-    always@(posedge clk or posedge rst) begin
-        if(rst) begin
-            pe_enabled <= '0;
-        end else begin
-            if(ub_rd_col_size_valid_in) begin
-                pe_enabled <= (1 << ub_rd_col_size_in) - 1;
-            end
-        end
-    end
+    //always@(posedge clk or posedge rst) begin
+    //    if(rst) begin
+    //        pe_enabled <= '0;
+    //    end else begin
+    //        if(ub_rd_col_size_valid_in) begin
+    //            pe_enabled <= (1 << ub_rd_col_size_in) - 1;
+    //        end
+    //    end
+    //end
 
 endmodule
