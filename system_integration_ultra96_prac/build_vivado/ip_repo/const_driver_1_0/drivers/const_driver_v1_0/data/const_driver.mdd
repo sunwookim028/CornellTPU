@@ -1,0 +1,10 @@
+
+
+OPTION psf_version = 2.1;
+
+BEGIN DRIVER const_driver
+	OPTION supported_peripherals = (const_driver);
+	OPTION copyfiles = all;
+	OPTION VERSION = 1.0;
+	OPTION NAME = const_driver;
+END DRIVER
