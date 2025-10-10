@@ -4,7 +4,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer, ClockCycles
 
 X = [
-    [1., 2., 3., 4.],
+    [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8]
@@ -33,8 +33,6 @@ def to_fixed(val, frac_bits=8):
     return scaled & 0xFFFF
 
 # Calculating X @ W1^T
-# Expected output:
-# N/A - Right now X and W are just placeholders
 
 
 # First column of accept weight signal turns off -> set switch flag on and set first row start signal on (start loading in X)
@@ -79,7 +77,6 @@ async def test_systolic_array_4x4(dut):
     # Cycle 2:
     # Load second weight into column 1
     # Load first weight into column 2
-    dut.sys_switch_in.value = 1
     dut.sys_weight_in_11.value = to_fixed(W1[0][2])
     dut.sys_accept_w_1.value = 1
     dut.sys_weight_in_12.value = to_fixed(W1[1][3])
@@ -109,6 +106,7 @@ async def test_systolic_array_4x4(dut):
     dut.sys_weight_in_13.value = to_fixed(W1[2][3])
     dut.sys_accept_w_3.value = 1
 
+
     await RisingEdge(dut.clk)
 
     # Array after this cycle:
@@ -136,9 +134,7 @@ async def test_systolic_array_4x4(dut):
     dut.sys_weight_in_14.value = to_fixed(W1[3][3])
     dut.sys_accept_w_4.value = 1
 
-    # Load first X into row 1
-    dut.sys_data_in_11.value = to_fixed(X[0][0])
-    dut.sys_start_1.value = 1
+    dut.sys_switch_in.value = 1
 
     await RisingEdge(dut.clk)
 
@@ -157,6 +153,8 @@ async def test_systolic_array_4x4(dut):
     # Load fourth weight into column 2
     # Load third weight into column 3
     # Load second weight into column 4
+    dut.sys_accept_w_1.value = 0
+
     dut.sys_weight_in_12.value = to_fixed(W1[1][0])
     dut.sys_accept_w_2.value = 1
     dut.sys_weight_in_13.value = to_fixed(W1[2][1])
@@ -164,12 +162,12 @@ async def test_systolic_array_4x4(dut):
     dut.sys_weight_in_14.value = to_fixed(W1[3][2])
     dut.sys_accept_w_4.value = 1
 
-    # Load second X into row 1
-    # Load first x into row 2
-    dut.sys_data_in_11.value = to_fixed(X[1][0])
+    dut.sys_switch_in.value = 0
+
+    # Load first X into row 1
+    dut.sys_data_in_11.value = to_fixed(X[0][0])
     dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[0][1])
-    dut.sys_start_2.value = 1
+
 
     await RisingEdge(dut.clk)
 
@@ -187,20 +185,21 @@ async def test_systolic_array_4x4(dut):
     # Cycle 6:
     # Load fourth weight into column 3
     # Load third weight into column 4
+    dut.sys_accept_w_1.value = 0
+    dut.sys_accept_w_2.value = 0
+
     dut.sys_weight_in_13.value = to_fixed(W1[2][0])
     dut.sys_accept_w_3.value = 1
     dut.sys_weight_in_14.value = to_fixed(W1[3][1])
     dut.sys_accept_w_4.value = 1
 
-    # Load third X into row 1
-    # Load second x into row 2
-    # Load first x into row 3
-    dut.sys_data_in_11.value = to_fixed(X[2][0])
+    # Load second X into row 1
+    # Load first x into row 2
+    dut.sys_data_in_11.value = to_fixed(X[1][0])
     dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[1][1])
+    dut.sys_data_in_21.value = to_fixed(X[0][1])
     dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[0][2])
-    dut.sys_start_3.value = 1
+
 
     await RisingEdge(dut.clk)
 
@@ -217,34 +216,28 @@ async def test_systolic_array_4x4(dut):
 
     # Cycle 7:
     # Load fourth weight into column 4
+    dut.sys_accept_w_1.value = 0
+    dut.sys_accept_w_2.value = 0
+    dut.sys_accept_w_3.value = 0
+
     dut.sys_weight_in_14.value = to_fixed(W1[3][0])
     dut.sys_accept_w_4.value = 1
 
-    # Load fourth X into row 1
-    # Load third x into row 2
-    # Load second x into row 3
-    # Load first x into row 4
-    dut.sys_data_in_11.value = to_fixed(X[3][0])
+    # Load third X into row 1
+    # Load second x into row 2
+    # Load first x into row 3
+    dut.sys_data_in_11.value = to_fixed(X[2][0])
     dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[2][1])
+    dut.sys_data_in_21.value = to_fixed(X[1][1])
     dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[1][2])
+    dut.sys_data_in_31.value = to_fixed(X[0][2])
     dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[0][3])
-    dut.sys_start_4.value = 1
-    # Assert outputs
-    print("Test:")
-    print(dut.sys_data_out_41.value)
-    print(dut.sys_data_out_42.value)
-    print(dut.sys_data_out_43.value)
-    print(dut.sys_data_out_44.value)
-    print("Done!")
-    #await RisingEdge(dut.clk)
-    #await RisingEdge(dut.clk)
-    #assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
-    #assert dut.sys_valid_out_41.value == to_fixed(1)
+
 
     await RisingEdge(dut.clk)
+    # Must do checks AFTER cycle
+    #assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
+    #assert dut.sys_valid_out_41.value == to_fixed(1)
 
     # Array after this cycle:
     #   [w11 , x41 ], [w21 , x31 ], [w31 , x21 ], [w41 , x11 ]
@@ -258,25 +251,24 @@ async def test_systolic_array_4x4(dut):
     # OUT_11 = w11*x11 + w12*x12 + w13*x13 + w14*x14
 
     # Cycle 8:
+    dut.sys_accept_w_1.value = 0
+    dut.sys_accept_w_2.value = 0
+    dut.sys_accept_w_3.value = 0
+    dut.sys_accept_w_4.value = 0
 
-    # Load fourth x into row 2
-    # Load third x into row 3
-    # Load second x into row 4
-    dut.sys_start_1.value = 0 # Done inputting x to row 1
-    dut.sys_data_in_21.value = to_fixed(X[3][1])
+    # Load fourth X into row 1
+    # Load third x into row 2
+    # Load second x into row 3
+    # Load first x into row 4
+    dut.sys_data_in_11.value = to_fixed(X[3][0])
+    dut.sys_start_1.value = 1
+    dut.sys_data_in_21.value = to_fixed(X[2][1])
     dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[2][2])
+    dut.sys_data_in_31.value = to_fixed(X[1][2])
     dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[1][3])
+    dut.sys_data_in_41.value = to_fixed(X[0][3])
     dut.sys_start_4.value = 1
     
-    # Assert outputs
-    print("Test:")
-    print(dut.sys_data_out_41.value)
-    print(dut.sys_data_out_42.value)
-    print(dut.sys_data_out_43.value)
-    print(dut.sys_data_out_44.value)
-    print("Done!")
 
     await RisingEdge(dut.clk)
 
@@ -295,20 +287,22 @@ async def test_systolic_array_4x4(dut):
 
     # Cycle 9:
 
-    # Load fourth x into row 3
-    # Load third x into row 4
-    dut.sys_start_2.value = 0 # Done inputting x to row 2
-    dut.sys_data_in_31.value = to_fixed(X[3][2])
+
+    # Load fourth x into row 2
+    # Load third x into row 3
+    # Load second x into row 4
+    dut.sys_start_1.value = 0 # Done inputting x to row 1
+    dut.sys_data_in_21.value = to_fixed(X[3][1])
+    dut.sys_start_2.value = 1
+    dut.sys_data_in_31.value = to_fixed(X[2][2])
     dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[2][3])
+    dut.sys_data_in_41.value = to_fixed(X[1][3])
     dut.sys_start_4.value = 1
-    # Assert outputs
-    print("Test:")
-    print(dut.sys_data_out_41.value)
-    print(dut.sys_data_out_42.value)
-    print(dut.sys_data_out_43.value)
-    print(dut.sys_data_out_44.value)
-    print("Done!")
+
+    assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
+    assert dut.sys_valid_out_41.value == to_fixed(1)
+
+
     await RisingEdge(dut.clk)
 
     # Array after this cycle:
@@ -327,10 +321,15 @@ async def test_systolic_array_4x4(dut):
 
     # Cycle 10:
 
-    # Load fourth x into row 4
-    dut.sys_start_3.value = 0 # Done inputting x to row 3
-    dut.sys_data_in_41.value = to_fixed(X[3][3])
+    # Load fourth x into row 3
+    # Load third x into row 4
+    dut.sys_start_2.value = 0 # Done inputting x to row 2
+    dut.sys_data_in_31.value = to_fixed(X[3][2])
+    dut.sys_start_3.value = 1
+    dut.sys_data_in_41.value = to_fixed(X[2][3])
     dut.sys_start_4.value = 1
+
+
     # Assert outputs
     print("Test:")
     print(dut.sys_data_out_41.value)
@@ -358,7 +357,11 @@ async def test_systolic_array_4x4(dut):
 
     # Cycle 11:
 
-    dut.sys_start_4.value = 0 # Done inputting x to row 4
+    # Load fourth x into row 4
+    dut.sys_start_3.value = 0 # Done inputting x to row 3
+    dut.sys_data_in_41.value = to_fixed(X[3][3])
+    dut.sys_start_4.value = 1
+
     # Assert outputs
     print("Test:")
     print(dut.sys_data_out_41.value)
@@ -384,6 +387,8 @@ async def test_systolic_array_4x4(dut):
 
 
     # Cycle 12:
+
+    dut.sys_start_4.value = 0 # Done inputting x to row 4
 
     # Array after this cycle:
     #   [w11 , no x], [w21 , no x], [w31 , no x], [w41 , no x]
