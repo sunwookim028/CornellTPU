@@ -3,8 +3,8 @@
 - Integrate subsystems developed by other teams with the on-board processing system, as well as other subsystems.
 
 ## Custom RTL IP & Interfacing with PS Tutorial:
-1. It is recommended to take a look and familiarize oneself with the tutorial at the following link in order to better understand the general design flow for the ultra96 board.
-   - In the following, I will explain how we can modify this flow to add in our own RTL modules using the Vivado "Create AXI4 Peripheral" tool.
+1. It is recommended to take a look and familiarize oneself with the tutorial at the following link in order to better understand the general design flow for the Ultra96-V2 board, which is the board we will be using to implement CornellTPU for now: https://github.com/yxd97/ultra96-example/tree/master 
+   - In this document, I will explain how we can modify the flow in that tutorial to add in our own RTL modules using the Vivado "Create AXI4 Peripheral" tool.
    - I also recommend this site if you are interested in learning more about AXI : https://zipcpu.com/blog/2022/05/07/learning-axi.html
 2. First, make sure your RTL design has been fully completed and tested, as this is of course crucial for it to work within a larger design
 3. Once you are sure it is functioning correctly, add it to a Vivado project if you have not already done so.
