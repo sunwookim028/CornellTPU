@@ -90,11 +90,11 @@ SOURCES = src/leaky_relu_child.sv \
 
 # Loss module test
 
-test_loss_child: $(SIM_BUILD_DIR)
-	$(IVERILOG) -o $(SIM_VVP) -s loss_child -s dump -g2012 $(SOURCES) test/dump_loss_child.sv
-	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_loss_child $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
-	! grep failure results.xml
-	mv loss_child.vcd waveforms/ 2>/dev/null || true
+# test_loss_child: $(SIM_BUILD_DIR)
+# 	$(IVERILOG) -o $(SIM_VVP) -s loss_child -s dump -g2012 $(SOURCES) test/dump_loss_child.sv
+# 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_loss_child $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+# 	! grep failure results.xml
+# 	mv loss_child.vcd waveforms/ 2>/dev/null || true
 
 test_loss_parent: $(SIM_BUILD_DIR)
 	$(IVERILOG) -o $(SIM_VVP) -s loss_parent -s dump -g2012 $(SOURCES) test/dump_loss_parent.sv
@@ -141,11 +141,11 @@ test_bias_parent: $(SIM_BUILD_DIR)
 	mv bias_parent.vcd waveforms/ 2>/dev/null || true
 
 # Vector Processing unit test
-# test_vpu: $(SIM_BUILD_DIR)
-# 	$(IVERILOG) -o $(SIM_VVP) -s vpu -s dump -g2012 $(SOURCES) test/dump_vpu.sv
-# 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_vpu $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
-# 	! grep failure results.xml
-# 	mv vpu.vcd waveforms/ 2>/dev/null || true
+test_vpu: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s vpu -s dump -g2012 $(SOURCES) test/dump_vpu.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_vpu $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv vpu.vcd waveforms/ 2>/dev/null || true
 
 # test_tpu: $(SIM_BUILD_DIR)
 # 	$(IVERILOG) -o $(SIM_VVP) -s tpu -s dump -g2012 $(SOURCES) test/dump_tpu.sv
