@@ -330,13 +330,11 @@ async def test_systolic_array_4x4(dut):
     dut.sys_start_4.value = 1
 
 
-    # Assert outputs
-    print("Test:")
-    print(dut.sys_data_out_41.value)
-    print(dut.sys_data_out_42.value)
-    print(dut.sys_data_out_43.value)
-    print(dut.sys_data_out_44.value)
-    print("Done!")
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_41.value == to_fixed(OUT[1][0])
+    assert dut.sys_valid_out_41.value == 1
+
     await RisingEdge(dut.clk)
 
     # Array after this cycle:
@@ -363,12 +361,11 @@ async def test_systolic_array_4x4(dut):
     dut.sys_start_4.value = 1
 
     # Assert outputs
-    print("Test:")
-    print(dut.sys_data_out_41.value)
-    print(dut.sys_data_out_42.value)
-    print(dut.sys_data_out_43.value)
-    print(dut.sys_data_out_44.value)
-    print("Done!")
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_41.value == to_fixed(OUT[2][0])
+    assert dut.sys_valid_out_41.value == 1
+
     await RisingEdge(dut.clk)
 
     # Array after this cycle:
@@ -389,6 +386,14 @@ async def test_systolic_array_4x4(dut):
     # Cycle 12:
 
     dut.sys_start_4.value = 0 # Done inputting x to row 4
+
+    # Assert outputs
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_41.value == to_fixed(OUT[3][0])
+    assert dut.sys_valid_out_41.value == 1
+
+    await RisingEdge(dut.clk)
 
     # Array after this cycle:
     #   [w11 , no x], [w21 , no x], [w31 , no x], [w41 , no x]
