@@ -1,6 +1,8 @@
 # System Integration Overview
 ## Team's Goal:
-- Integrate subsystems developed by other teams with the on-board processing system, as well as other subsystems.
+Integrate subsystems developed by other teams with the on-board processing system, as well as other subsystems.
+
+Note: this document is a work in progress and will continue to be updated!
 
 ## Custom RTL IP & Interfacing with PS Tutorial:
 1. It is recommended to take a look and familiarize oneself with the tutorial at the following link in order to better understand the general design flow for the Ultra96-V2 board, which is the board we will be using to implement CornellTPU for now: https://github.com/yxd97/ultra96-example/tree/master 
@@ -20,4 +22,7 @@
    - Add your relevant RTL code/module(s) to this directory.
    - The file called [ip_name].v is the top level file of the ip - within this module, you must instantiate your RTL design, connect it's inputs and outputs to the AXI interface module, and add any additional ports/parameters/additional logic you want
    - The file called [ip_name]_S00_AXI.v contains the AXI interface wrapper, and provides logic for all the interface data signals, handshaking, provides some memory mapped registers, and more. Here is where you might modify the provided code to expose certain signals in your RTL to the PS.
-   - 6. Finally, your IP should be ready to be added to the block diagram - from this point on everything is very similar to the HLS tutorial linked above.
+6. Finally, your IP should be ready to be added to the block diagram - from this point on everything is very similar to the HLS tutorial linked above.
+7. As in the aove tutorial, you must also write a host program to run on the PS, and then follow a similar series of steps for loading and testing the design on hardware.
+
+
