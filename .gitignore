@@ -1,3 +1,7 @@
 __pycache__/
 .pytest_cache/
 src_jl_noted/
+waveforms/
+pymtl_tests
+sim_build/
+results.xml
