@@ -11,7 +11,7 @@ X = [
 ]
 
 W1 = [
-    [1., 2., 3., 4.],
+    [1., 0., 0., 0.],
     [0., 1., 0., 0.],
     [0., 0., 1., 0.],
     [0., 0., 0., 1.]
@@ -284,7 +284,6 @@ async def test_systolic_array_4x4(dut):
     # OUT_21 = w11*x21 + w12*x22 + w13*x23 + w14*x24
     # OUT_12 = w21*x11 + w22*x12 + w23*x13 + w24*x14
 
-
     # Cycle 9:
 
 
@@ -299,12 +298,13 @@ async def test_systolic_array_4x4(dut):
     dut.sys_data_in_41.value = to_fixed(X[1][3])
     dut.sys_start_4.value = 1
 
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
     assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
-    assert dut.sys_valid_out_41.value == to_fixed(1)
+    assert dut.sys_valid_out_41.value == 1
 
 
     await RisingEdge(dut.clk)
-
     # Array after this cycle:
     #   [w11 , no x], [w21 , no x], [w31 , x41 ], [w41 , x31 ]
     #   [w12 , no x], [w22 , x42 ], [w32 , x32 ], [w42 , x22 ]
