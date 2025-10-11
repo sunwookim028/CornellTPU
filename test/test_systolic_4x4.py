@@ -2,12 +2,19 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer, ClockCycles
-
+'''
 X = [
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8]
+]
+'''
+X = [
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
 ]
 
 W1 = [
@@ -16,12 +23,20 @@ W1 = [
     [0., 0., 1., 0.],
     [0., 0., 0., 1.]
 ]
-
+'''
 OUT = [
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8]
+]
+'''
+
+OUT = [
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
+    [1., 2., 3., 4.],
 ]
 
 # These arrays are trivial for now.
@@ -235,9 +250,6 @@ async def test_systolic_array_4x4(dut):
 
 
     await RisingEdge(dut.clk)
-    # Must do checks AFTER cycle
-    #assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
-    #assert dut.sys_valid_out_41.value == to_fixed(1)
 
     # Array after this cycle:
     #   [w11 , x41 ], [w21 , x31 ], [w31 , x21 ], [w41 , x11 ]
@@ -334,6 +346,8 @@ async def test_systolic_array_4x4(dut):
     await Timer(1, units="ns")
     assert dut.sys_data_out_41.value == to_fixed(OUT[1][0])
     assert dut.sys_valid_out_41.value == 1
+    assert dut.sys_data_out_42.value == to_fixed(OUT[0][1])
+    assert dut.sys_valid_out_42.value == 1
 
     await RisingEdge(dut.clk)
 
@@ -365,6 +379,10 @@ async def test_systolic_array_4x4(dut):
     await Timer(1, units="ns")
     assert dut.sys_data_out_41.value == to_fixed(OUT[2][0])
     assert dut.sys_valid_out_41.value == 1
+    assert dut.sys_data_out_42.value == to_fixed(OUT[1][1])
+    assert dut.sys_valid_out_42.value == 1
+    assert dut.sys_data_out_43.value == to_fixed(OUT[0][2])
+    assert dut.sys_valid_out_43.value == 1
 
     await RisingEdge(dut.clk)
 
@@ -393,6 +411,18 @@ async def test_systolic_array_4x4(dut):
     assert dut.sys_data_out_41.value == to_fixed(OUT[3][0])
     assert dut.sys_valid_out_41.value == 1
 
+    # Assert outputs
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_41.value == to_fixed(OUT[3][0])
+    assert dut.sys_valid_out_41.value == 1
+    assert dut.sys_data_out_42.value == to_fixed(OUT[2][1])
+    assert dut.sys_valid_out_42.value == 1
+    assert dut.sys_data_out_43.value == to_fixed(OUT[1][2])
+    assert dut.sys_valid_out_43.value == 1
+    assert dut.sys_data_out_44.value == to_fixed(OUT[0][3])
+    assert dut.sys_valid_out_44.value == 1
+
     await RisingEdge(dut.clk)
 
     # Array after this cycle:
@@ -411,6 +441,18 @@ async def test_systolic_array_4x4(dut):
 
     # Cycle 13:
 
+    # Assert outputs
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_42.value == to_fixed(OUT[3][1])
+    assert dut.sys_valid_out_42.value == 1
+    assert dut.sys_data_out_43.value == to_fixed(OUT[2][2])
+    assert dut.sys_valid_out_43.value == 1
+    assert dut.sys_data_out_44.value == to_fixed(OUT[1][3])
+    assert dut.sys_valid_out_44.value == 1
+
+    await RisingEdge(dut.clk)
+
     # Array after this cycle:
     #   [w11 , no x], [w21 , no x], [w31 , no x], [w41 , no x]
     #   [w12 , no x], [w22 , no x], [w32 , no x], [w42 , no x]
@@ -421,10 +463,21 @@ async def test_systolic_array_4x4(dut):
     #        NONE          NONE         NONE        OUT_44
     #
     # OUT_44 = w41*x41 + w42*x42 + w43*x43 + w44*x44
+    
 
 
 
     # Cycle 14:
+
+    # Assert outputs
+    # Wait for 1 nanosecond
+    await Timer(1, units="ns")
+    assert dut.sys_data_out_43.value == to_fixed(OUT[3][2])
+    assert dut.sys_valid_out_43.value == 1
+    assert dut.sys_data_out_44.value == to_fixed(OUT[2][3])
+    assert dut.sys_valid_out_44.value == 1
+
+    await RisingEdge(dut.clk)
 
     # Array after this cycle:
     #   [w11 , no x], [w21 , no x], [w31 , no x], [w41 , no x]
@@ -436,8 +489,13 @@ async def test_systolic_array_4x4(dut):
     #        NONE          NONE         NONE        NONE
     #
 
-    #TODO: Add more cycle diagrams to confirm inputs/outputs at each cycle,
-    #      then implement test in cocotb
+    # Cycle 15:
+
+    assert dut.sys_data_out_44.value == to_fixed(OUT[3][3])
+    assert dut.sys_valid_out_44.value == 1
+
+    await RisingEdge(dut.clk)
+
 
     # Original test case below:
     '''

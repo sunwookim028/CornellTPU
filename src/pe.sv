@@ -49,11 +49,14 @@ module pe #(
 
     // Only the switch flag is combinational (active register copies inactive register on the same clock cycle that switch flag is set)
     // That means inputs from the left side of the PE can load in on the same clock cycle that the switch flag is set
-    always_comb begin
-        if (pe_switch_in) begin
-            weight_reg_active = weight_reg_inactive;
-        end
-    end
+    //always_comb begin
+    //    if (pe_switch_in) begin
+    //        weight_reg_active = weight_reg_inactive;
+    //    end
+    //end
+
+    // THIS IS ILLEGAL WHY DID THEY MIX COMBINATIONAL AND SEQUENTIAL LOGIC?!?!
+    // RACE CONDITION AND SOURCE OF SO MUCH DEBUGGING PAIN!
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst || !pe_enabled) begin
@@ -74,6 +77,15 @@ module pe #(
             end else begin
                 pe_weight_out <= 0;
             end
+
+            if (pe_switch_in) begin
+                if (pe_accept_w_in) begin
+                    weight_reg_active <= pe_weight_in;
+                end else begin
+                    weight_reg_active <= weight_reg_inactive; // Loads inactive from previous edge
+                end
+            end
+        // else: weight_reg_active retains its value
 
             if (pe_valid_in) begin
                 pe_input_out <= pe_input_in;
