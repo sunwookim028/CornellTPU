@@ -1,0 +1,5 @@
+set_property SRC_FILE_INFO {cfile:/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc rfile:../../../simple_base_project.srcs/constrs_1/new/constraints.xdc id:1} [current_design]
+set_property src_info {type:XDC file:1 line:2 export:INPUT save:INPUT read:READ} [current_design]
+create_clock -name clk -period 10.000 [get_ports clk]
+set_property src_info {type:XDC file:1 line:5 export:INPUT save:INPUT read:READ} [current_design]
+set_clock_groups -asynchronous -group [get_clocks clk]

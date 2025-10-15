@@ -1,0 +1,251 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Fri Oct 10 16:05:32 2025
+# Process ID: 4069525
+# Current directory: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1
+# Command line: vivado -log design_1_const_driver_v1_0_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_const_driver_v1_0_0_0.tcl
+# Log file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/design_1_const_driver_v1_0_0_0.vds
+# Journal file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/vivado.jou
+# Running On: brg-zhang-xcel.ece.cornell.edu, OS: Linux, CPU Frequency: 3200.000 MHz, CPU Physical cores: 23, Host memory: 235732 MB
+#-----------------------------------------------------------
+source design_1_const_driver_v1_0_0_0.tcl -notrace
+create_project: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 1555.770 ; gain = 37.836 ; free physical = 87468 ; free virtual = 189165
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/home/isf9/ultra96-practice/build_vivado/ip_repo/const_driver_1_0'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/xilinx/Vivado/2023.2/data/ip'.
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_const_driver_v1_0_0_0
+Command: synth_design -top design_1_const_driver_v1_0_0_0 -part xczu3eg-sbva484-1-i -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Device 21-403] Loading part xczu3eg-sbva484-1-i
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 4070006
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2739.773 ; gain = 290.777 ; free physical = 85977 ; free virtual = 187674
+---------------------------------------------------------------------------------
+INFO: [Synth 8-11241] undeclared symbol 'const_driver_out_data', assumed default net type 'wire' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0.v:72]
+WARNING: [Synth 8-8895] 'const_driver_out_data' is already implicitly declared on line 72 [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0.v:76]
+INFO: [Synth 8-6157] synthesizing module 'design_1_const_driver_v1_0_0_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_const_driver_v1_0_0_0/synth/design_1_const_driver_v1_0_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'const_driver_v1_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0.v:4]
+INFO: [Synth 8-6157] synthesizing module 'const_driver_v1_0_S00_AXI' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0_S00_AXI.v:4]
+INFO: [Synth 8-226] default block is never used [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0_S00_AXI.v:376]
+INFO: [Synth 8-6155] done synthesizing module 'const_driver_v1_0_S00_AXI' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0_S00_AXI.v:4]
+INFO: [Synth 8-6157] synthesizing module 'const_driver' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver.sv:23]
+WARNING: [Synth 8-567] referenced signal 'rst_n' should be on the sensitivity list [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver.sv:33]
+INFO: [Synth 8-6155] done synthesizing module 'const_driver' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver.sv:23]
+INFO: [Synth 8-6155] done synthesizing module 'const_driver_v1_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ipshared/afba/hdl/const_driver_v1_0.v:4]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_const_driver_v1_0_0_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_const_driver_v1_0_0_0/synth/design_1_const_driver_v1_0_0_0.v:53]
+WARNING: [Synth 8-7129] Port clk in module const_driver is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_AWPROT[2] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_AWPROT[1] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_AWPROT[0] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_ARPROT[2] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_ARPROT[1] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_AXI_ARPROT[0] in module const_driver_v1_0_S00_AXI is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2818.742 ; gain = 369.746 ; free physical = 85893 ; free virtual = 187590
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2824.680 ; gain = 375.684 ; free physical = 85893 ; free virtual = 187590
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2824.680 ; gain = 375.684 ; free physical = 85893 ; free virtual = 187590
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2824.680 ; gain = 0.000 ; free physical = 85893 ; free virtual = 187590
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2928.344 ; gain = 0.000 ; free physical = 85857 ; free virtual = 187554
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2950.164 ; gain = 20.812 ; free physical = 85847 ; free virtual = 187544
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2950.164 ; gain = 501.168 ; free physical = 85837 ; free virtual = 187535
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu3eg-sbva484-1-i
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2950.164 ; gain = 501.168 ; free physical = 85837 ; free virtual = 187535
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2950.164 ; gain = 501.168 ; free physical = 85837 ; free virtual = 187535
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2950.164 ; gain = 501.168 ; free physical = 85836 ; free virtual = 187534
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 5     
+	                4 Bit    Registers := 2     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 6     
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 3     
+	   4 Input   32 Bit        Muxes := 4     
+	   2 Input    1 Bit        Muxes := 5     
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 360 (col length:72)
+BRAMs: 432 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+WARNING: [Synth 8-7129] Port s00_axi_awprot[2] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s00_axi_awprot[1] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s00_axi_awprot[0] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s00_axi_arprot[2] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s00_axi_arprot[1] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port s00_axi_arprot[0] in module design_1_const_driver_v1_0_0_0 is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:13 ; elapsed = 00:00:14 . Memory (MB): peak = 2950.164 ; gain = 501.168 ; free physical = 85833 ; free virtual = 187532
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:21 ; elapsed = 00:00:22 . Memory (MB): peak = 3372.156 ; gain = 923.160 ; free physical = 85414 ; free virtual = 187112
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:21 ; elapsed = 00:00:22 . Memory (MB): peak = 3372.156 ; gain = 923.160 ; free physical = 85414 ; free virtual = 187112
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:21 ; elapsed = 00:00:22 . Memory (MB): peak = 3382.180 ; gain = 933.184 ; free physical = 85408 ; free virtual = 187106
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----+------+
+|      |Cell |Count |
++------+-----+------+
+|1     |LUT1 |     1|
+|2     |LUT2 |     1|
+|3     |LUT3 |     1|
+|4     |LUT4 |    17|
+|5     |LUT5 |     8|
+|6     |LUT6 |    26|
+|7     |FDRE |   138|
+|8     |FDSE |     1|
++------+-----+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.055 ; gain = 948.059 ; free physical = 85391 ; free virtual = 187089
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 7 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:24 ; elapsed = 00:00:25 . Memory (MB): peak = 3397.055 ; gain = 822.574 ; free physical = 85391 ; free virtual = 187089
+Synthesis Optimization Complete : Time (s): cpu = 00:00:26 ; elapsed = 00:00:26 . Memory (MB): peak = 3397.062 ; gain = 948.059 ; free physical = 85390 ; free virtual = 187088
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3408.023 ; gain = 0.000 ; free physical = 85684 ; free virtual = 187382
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3459.852 ; gain = 0.000 ; free physical = 85659 ; free virtual = 187358
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: e2fd28e9
+INFO: [Common 17-83] Releasing license: Synthesis
+28 Infos, 16 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:34 ; elapsed = 00:00:32 . Memory (MB): peak = 3459.887 ; gain = 1855.305 ; free physical = 85659 ; free virtual = 187357
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2460.831; main = 2368.672; forked = 351.523
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4797.594; main = 3459.855; forked = 1613.262
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3483.863 ; gain = 0.000 ; free physical = 85659 ; free virtual = 187357
+INFO: [Common 17-1381] The checkpoint '/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/design_1_const_driver_v1_0_0_0.dcp' has been generated.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP design_1_const_driver_v1_0_0_0, cache-ID = c47aaee9a1da1365
+INFO: [Coretcl 2-1174] Renamed 2 cell refs.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3483.863 ; gain = 0.000 ; free physical = 85662 ; free virtual = 187361
+INFO: [Common 17-1381] The checkpoint '/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/design_1_const_driver_v1_0_0_0.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file design_1_const_driver_v1_0_0_0_utilization_synth.rpt -pb design_1_const_driver_v1_0_0_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 10 16:06:17 2025...

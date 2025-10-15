@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Fri Oct 10 16:05:32 2025
+# Process ID: 4069525
+# Current directory: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1
+# Command line: vivado -log design_1_const_driver_v1_0_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_const_driver_v1_0_0_0.tcl
+# Log file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/design_1_const_driver_v1_0_0_0.vds
+# Journal file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/design_1_const_driver_v1_0_0_0_synth_1/vivado.jou
+# Running On: brg-zhang-xcel.ece.cornell.edu, OS: Linux, CPU Frequency: 3200.000 MHz, CPU Physical cores: 23, Host memory: 235732 MB
+#-----------------------------------------------------------
+source design_1_const_driver_v1_0_0_0.tcl -notrace

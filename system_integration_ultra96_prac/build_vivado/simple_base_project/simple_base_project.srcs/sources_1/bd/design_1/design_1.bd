@@ -11,7 +11,6 @@
       "validated": "true"
     },
     "design_tree": {
-      "const_driver_0": "",
       "clk_wiz_0": "",
       "zynq_ultra_ps_e_0": "",
       "ps8_0_axi_periph": {
@@ -21,16 +20,10 @@
         }
       },
       "rst_ps8_0_99M": "",
-      "rst_clk_wiz_0_200M": ""
+      "rst_clk_wiz_0_200M": "",
+      "const_driver_v1_0_0": ""
     },
     "components": {
-      "const_driver_0": {
-        "vlnv": "user.org:user:const_driver:1.0",
-        "ip_revision": "1",
-        "xci_name": "design_1_const_driver_0_0",
-        "xci_path": "ip/design_1_const_driver_0_0/design_1_const_driver_0_0.xci",
-        "inst_hier_path": "const_driver_0"
-      },
       "clk_wiz_0": {
         "vlnv": "xilinx.com:ip:clk_wiz:6.0",
         "ip_revision": "13",
@@ -441,13 +434,27 @@
         "xci_name": "design_1_rst_clk_wiz_0_200M_1",
         "xci_path": "ip/design_1_rst_clk_wiz_0_200M_1/design_1_rst_clk_wiz_0_200M_1.xci",
         "inst_hier_path": "rst_clk_wiz_0_200M"
+      },
+      "const_driver_v1_0_0": {
+        "vlnv": "user.org:user:const_driver_v1_0:1.0",
+        "ip_revision": "1",
+        "xci_name": "design_1_const_driver_v1_0_0_0",
+        "xci_path": "ip/design_1_const_driver_v1_0_0_0/design_1_const_driver_v1_0_0_0.xci",
+        "inst_hier_path": "const_driver_v1_0_0",
+        "interface_ports": {
+          "s00_axi": {
+            "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
+            "mode": "Slave",
+            "memory_map_ref": "s00_axi"
+          }
+        }
       }
     },
     "interface_nets": {
       "ps8_0_axi_periph_M00_AXI": {
         "interface_ports": [
           "ps8_0_axi_periph/M00_AXI",
-          "const_driver_0/S00_AXI"
+          "const_driver_v1_0_0/s00_axi"
         ]
       },
       "zynq_ultra_ps_e_0_M_AXI_HPM0_LPD": {
@@ -461,9 +468,9 @@
       "clk_wiz_0_clk_out1": {
         "ports": [
           "clk_wiz_0/clk_out1",
-          "const_driver_0/s00_axi_aclk",
           "ps8_0_axi_periph/M00_ACLK",
-          "rst_clk_wiz_0_200M/slowest_sync_clk"
+          "rst_clk_wiz_0_200M/slowest_sync_clk",
+          "const_driver_v1_0_0/s00_axi_aclk"
         ]
       },
       "clk_wiz_0_locked": {
@@ -475,8 +482,8 @@
       "rst_clk_wiz_0_200M_peripheral_aresetn": {
         "ports": [
           "rst_clk_wiz_0_200M/peripheral_aresetn",
-          "const_driver_0/s00_axi_aresetn",
-          "ps8_0_axi_periph/M00_ARESETN"
+          "ps8_0_axi_periph/M00_ARESETN",
+          "const_driver_v1_0_0/s00_axi_aresetn"
         ]
       },
       "rst_ps8_0_99M_peripheral_aresetn": {
@@ -511,12 +518,10 @@
         "address_spaces": {
           "Data": {
             "segments": {
-              "SEG_const_driver_0_S00_AXI_reg": {
-                "address_block": "/const_driver_0/S00_AXI/S00_AXI_reg",
+              "SEG_const_driver_v1_0_0_reg0": {
+                "address_block": "/const_driver_v1_0_0/s00_axi/reg0",
                 "offset": "0x0080000000",
-                "range": "64K",
-                "offset_base_param": "C_S00_AXI_BASEADDR",
-                "offset_high_param": "C_S00_AXI_HIGHADDR"
+                "range": "4K"
               }
             }
           }

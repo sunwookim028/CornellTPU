@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Fri Oct 10 16:06:29 2025
+# Process ID: 4071169
+# Current directory: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1
+# Command line: vivado -log design_1_wrapper.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_wrapper.tcl
+# Log file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/design_1_wrapper.vds
+# Journal file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/vivado.jou
+# Running On: brg-zhang-xcel.ece.cornell.edu, OS: Linux, CPU Frequency: 3200.000 MHz, CPU Physical cores: 23, Host memory: 235732 MB
+#-----------------------------------------------------------
+source design_1_wrapper.tcl -notrace

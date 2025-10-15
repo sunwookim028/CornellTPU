@@ -1,0 +1,302 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Fri Oct 10 16:06:29 2025
+# Process ID: 4071169
+# Current directory: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1
+# Command line: vivado -log design_1_wrapper.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source design_1_wrapper.tcl
+# Log file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/design_1_wrapper.vds
+# Journal file: /home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/vivado.jou
+# Running On: brg-zhang-xcel.ece.cornell.edu, OS: Linux, CPU Frequency: 3200.000 MHz, CPU Physical cores: 23, Host memory: 235732 MB
+#-----------------------------------------------------------
+source design_1_wrapper.tcl -notrace
+create_project: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 1563.379 ; gain = 0.023 ; free physical = 87405 ; free virtual = 189102
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/home/isf9/ultra96-practice/build_vivado/ip_repo/const_driver_1_0'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/xilinx/Vivado/2023.2/data/ip'.
+Command: synth_design -top design_1_wrapper -part xczu3eg-sbva484-1-i
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Device 21-403] Loading part xczu3eg-sbva484-1-i
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 4071669
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2755.844 ; gain = 292.746 ; free physical = 85943 ; free virtual = 187641
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'design_1_wrapper' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v:13]
+INFO: [Synth 8-6157] synthesizing module 'design_1' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:13]
+INFO: [Synth 8-6157] synthesizing module 'design_1_clk_wiz_0_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_clk_wiz_0_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_clk_wiz_0_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_clk_wiz_0_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'design_1_const_driver_v1_0_0_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_const_driver_v1_0_0_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_const_driver_v1_0_0_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_const_driver_v1_0_0_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'design_1_ps8_0_axi_periph_1' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:262]
+INFO: [Synth 8-6157] synthesizing module 's00_couplers_imp_1A7ZMW4' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:582]
+INFO: [Synth 8-6157] synthesizing module 'design_1_auto_cc_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_auto_cc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_auto_cc_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_auto_cc_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axi_awuser' of module 'design_1_auto_cc_0' is unconnected for instance 'auto_cc' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:872]
+WARNING: [Synth 8-7071] port 'm_axi_aruser' of module 'design_1_auto_cc_0' is unconnected for instance 'auto_cc' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:872]
+WARNING: [Synth 8-7023] instance 'auto_cc' of module 'design_1_auto_cc_0' has 86 connections declared, but only 84 given [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:872]
+INFO: [Synth 8-6157] synthesizing module 'design_1_auto_pc_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_auto_pc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_auto_pc_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_auto_pc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 's00_couplers_imp_1A7ZMW4' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:582]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_ps8_0_axi_periph_1' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:262]
+INFO: [Synth 8-6157] synthesizing module 'design_1_rst_clk_wiz_0_200M_1' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_rst_clk_wiz_0_200M_1_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_rst_clk_wiz_0_200M_1' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_rst_clk_wiz_0_200M_1_stub.v:6]
+WARNING: [Synth 8-7071] port 'mb_reset' of module 'design_1_rst_clk_wiz_0_200M_1' is unconnected for instance 'rst_clk_wiz_0_200M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:174]
+WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'design_1_rst_clk_wiz_0_200M_1' is unconnected for instance 'rst_clk_wiz_0_200M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:174]
+WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'design_1_rst_clk_wiz_0_200M_1' is unconnected for instance 'rst_clk_wiz_0_200M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:174]
+WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'design_1_rst_clk_wiz_0_200M_1' is unconnected for instance 'rst_clk_wiz_0_200M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:174]
+WARNING: [Synth 8-7023] instance 'rst_clk_wiz_0_200M' of module 'design_1_rst_clk_wiz_0_200M_1' has 10 connections declared, but only 6 given [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:174]
+INFO: [Synth 8-6157] synthesizing module 'design_1_rst_ps8_0_99M_1' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_rst_ps8_0_99M_1_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_rst_ps8_0_99M_1' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_rst_ps8_0_99M_1_stub.v:6]
+WARNING: [Synth 8-7071] port 'mb_reset' of module 'design_1_rst_ps8_0_99M_1' is unconnected for instance 'rst_ps8_0_99M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:181]
+WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'design_1_rst_ps8_0_99M_1' is unconnected for instance 'rst_ps8_0_99M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:181]
+WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'design_1_rst_ps8_0_99M_1' is unconnected for instance 'rst_ps8_0_99M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:181]
+WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'design_1_rst_ps8_0_99M_1' is unconnected for instance 'rst_ps8_0_99M' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:181]
+WARNING: [Synth 8-7023] instance 'rst_ps8_0_99M' of module 'design_1_rst_ps8_0_99M_1' has 10 connections declared, but only 6 given [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:181]
+INFO: [Synth 8-6157] synthesizing module 'design_1_zynq_ultra_ps_e_0_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_zynq_ultra_ps_e_0_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_zynq_ultra_ps_e_0_0' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/.Xil/Vivado-4071169-brg-zhang-xcel.ece.cornell.edu/realtime/design_1_zynq_ultra_ps_e_0_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'saxigp6_awready' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_wready' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_bid' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_bresp' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_bvalid' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_arready' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_rid' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_rdata' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_rresp' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_rlast' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7071] port 'saxigp6_rvalid' of module 'design_1_zynq_ultra_ps_e_0_0' is unconnected for instance 'zynq_ultra_ps_e_0' [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+WARNING: [Synth 8-7023] instance 'zynq_ultra_ps_e_0' of module 'design_1_zynq_ultra_ps_e_0_0' has 82 connections declared, but only 71 given [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:188]
+INFO: [Synth 8-6155] done synthesizing module 'design_1' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/synth/design_1.v:13]
+INFO: [Synth 8-6155] done synthesizing module 'design_1_wrapper' (0#1) [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v:13]
+WARNING: [Synth 8-7129] Port ACLK in module design_1_ps8_0_axi_periph_1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port ARESETN in module design_1_ps8_0_axi_periph_1 is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2832.812 ; gain = 369.715 ; free physical = 85848 ; free virtual = 187546
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2838.750 ; gain = 375.652 ; free physical = 85828 ; free virtual = 187526
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2838.750 ; gain = 375.652 ; free physical = 85828 ; free virtual = 187526
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2842.750 ; gain = 0.000 ; free physical = 85827 ; free virtual = 187524
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_in_context.xdc] for cell 'design_1_i/clk_wiz_0'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0_in_context.xdc] for cell 'design_1_i/clk_wiz_0'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_zynq_ultra_ps_e_0_0/design_1_zynq_ultra_ps_e_0_0/design_1_zynq_ultra_ps_e_0_0_in_context.xdc] for cell 'design_1_i/zynq_ultra_ps_e_0'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_zynq_ultra_ps_e_0_0/design_1_zynq_ultra_ps_e_0_0/design_1_zynq_ultra_ps_e_0_0_in_context.xdc] for cell 'design_1_i/zynq_ultra_ps_e_0'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_auto_cc_0/design_1_auto_cc_0/design_1_auto_cc_0_in_context.xdc] for cell 'design_1_i/ps8_0_axi_periph/s00_couplers/auto_cc'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_auto_cc_0/design_1_auto_cc_0/design_1_auto_cc_0_in_context.xdc] for cell 'design_1_i/ps8_0_axi_periph/s00_couplers/auto_cc'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_auto_pc_0/design_1_auto_pc_0/design_1_auto_pc_0_in_context.xdc] for cell 'design_1_i/ps8_0_axi_periph/s00_couplers/auto_pc'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_auto_pc_0/design_1_auto_pc_0/design_1_auto_pc_0_in_context.xdc] for cell 'design_1_i/ps8_0_axi_periph/s00_couplers/auto_pc'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_rst_ps8_0_99M_1/design_1_rst_ps8_0_99M_1/design_1_rst_ps8_0_99M_1_in_context.xdc] for cell 'design_1_i/rst_ps8_0_99M'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_rst_ps8_0_99M_1/design_1_rst_ps8_0_99M_1/design_1_rst_ps8_0_99M_1_in_context.xdc] for cell 'design_1_i/rst_ps8_0_99M'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_rst_clk_wiz_0_200M_1/design_1_rst_clk_wiz_0_200M_1/design_1_rst_clk_wiz_0_200M_1_in_context.xdc] for cell 'design_1_i/rst_clk_wiz_0_200M'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_rst_clk_wiz_0_200M_1/design_1_rst_clk_wiz_0_200M_1/design_1_rst_clk_wiz_0_200M_1_in_context.xdc] for cell 'design_1_i/rst_clk_wiz_0_200M'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_const_driver_v1_0_0_0/design_1_const_driver_v1_0_0_0/design_1_const_driver_v1_0_0_0_in_context.xdc] for cell 'design_1_i/const_driver_v1_0_0'
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.gen/sources_1/bd/design_1/ip/design_1_const_driver_v1_0_0_0/design_1_const_driver_v1_0_0_0/design_1_const_driver_v1_0_0_0_in_context.xdc] for cell 'design_1_i/const_driver_v1_0_0'
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc]
+WARNING: [Vivado 12-584] No ports matched 'clk'. [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc:2]
+WARNING: [Vivado 12-627] No clocks matched 'clk'. [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc:5]
+INFO: [Vivado 12-626] No clocks found. Please use 'create_clock' or 'create_generated_clock' command to create clocks. [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc:5]
+CRITICAL WARNING: [Vivado 12-4739] set_clock_groups:No valid object(s) found for '-group [get_clocks clk]'. [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc:5]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+CRITICAL WARNING: [Vivado 12-4739] set_clock_groups:No valid object(s) found for '-group '. [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc:5]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc]
+WARNING: [Project 1-498] One or more constraints failed evaluation while reading constraint file [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.srcs/constrs_1/new/constraints.xdc] and the design contains unresolved black boxes. These constraints will be read post-synthesis (as long as their source constraint file is marked as used_in_implementation) and should be applied correctly then. You should review the constraints listed in the file [.Xil/design_1_wrapper_propImpl.xdc] and check the run log file to verify that these constraints were correctly applied.
+Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2909.750 ; gain = 0.000 ; free physical = 85846 ; free virtual = 187544
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2909.785 ; gain = 0.000 ; free physical = 85851 ; free virtual = 187549
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 2909.785 ; gain = 446.688 ; free physical = 85840 ; free virtual = 187538
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu3eg-sbva484-1-i
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 2909.785 ; gain = 446.688 ; free physical = 85840 ; free virtual = 187538
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/clk_wiz_0. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/zynq_ultra_ps_e_0. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/ps8_0_axi_periph/s00_couplers/auto_cc. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/ps8_0_axi_periph/s00_couplers/auto_pc. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/ps8_0_axi_periph. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/rst_ps8_0_99M. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/rst_clk_wiz_0_200M. (constraint file  auto generated constraint).
+Applied set_property KEEP_HIERARCHY = SOFT for design_1_i/const_driver_v1_0_0. (constraint file  auto generated constraint).
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 2909.785 ; gain = 446.688 ; free physical = 85839 ; free virtual = 187537
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 2909.785 ; gain = 446.688 ; free physical = 85836 ; free virtual = 187535
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 360 (col length:72)
+BRAMs: 432 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+WARNING: [Synth 8-7129] Port ACLK in module design_1_ps8_0_axi_periph_1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port ARESETN in module design_1_ps8_0_axi_periph_1 is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:18 . Memory (MB): peak = 2909.785 ; gain = 446.688 ; free physical = 85831 ; free virtual = 187535
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 3383.109 ; gain = 920.012 ; free physical = 85397 ; free virtual = 187100
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 3383.109 ; gain = 920.012 ; free physical = 85397 ; free virtual = 187100
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 3393.125 ; gain = 930.027 ; free physical = 85390 ; free virtual = 187093
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+-------------------------------+----------+
+|      |BlackBox name                  |Instances |
++------+-------------------------------+----------+
+|1     |design_1_auto_cc_0             |         1|
+|2     |design_1_auto_pc_0             |         1|
+|3     |design_1_clk_wiz_0_0           |         1|
+|4     |design_1_const_driver_v1_0_0_0 |         1|
+|5     |design_1_rst_clk_wiz_0_200M_1  |         1|
+|6     |design_1_rst_ps8_0_99M_1       |         1|
+|7     |design_1_zynq_ultra_ps_e_0_0   |         1|
++------+-------------------------------+----------+
+
+Report Cell Usage: 
++------+-----------------------------+------+
+|      |Cell                         |Count |
++------+-----------------------------+------+
+|1     |design_1_auto_cc             |     1|
+|2     |design_1_auto_pc             |     1|
+|3     |design_1_clk_wiz_0           |     1|
+|4     |design_1_const_driver_v1_0_0 |     1|
+|5     |design_1_rst_clk_wiz_0_200M  |     1|
+|6     |design_1_rst_ps8_0_99M       |     1|
+|7     |design_1_zynq_ultra_ps_e_0   |     1|
++------+-----------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.000 ; gain = 944.902 ; free physical = 85371 ; free virtual = 187074
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 3 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:24 ; elapsed = 00:00:25 . Memory (MB): peak = 3408.000 ; gain = 873.867 ; free physical = 85384 ; free virtual = 187087
+Synthesis Optimization Complete : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 3408.008 ; gain = 944.902 ; free physical = 85383 ; free virtual = 187086
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3408.008 ; gain = 0.000 ; free physical = 85605 ; free virtual = 187308
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3441.688 ; gain = 0.000 ; free physical = 85645 ; free virtual = 187348
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 2df78bc6
+INFO: [Common 17-83] Releasing license: Synthesis
+39 Infos, 33 Warnings, 2 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:38 ; elapsed = 00:00:37 . Memory (MB): peak = 3455.660 ; gain = 1855.617 ; free physical = 85628 ; free virtual = 187331
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2667.751; main = 2391.189; forked = 349.928
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 5006.391; main = 3455.629; forked = 1613.262
+INFO: [runtcl-6] Synthesis results are not added to the cache due to CRITICAL_WARNING
+INFO: [Common 17-1381] The checkpoint '/home/isf9/ultra96-practice/build_vivado/simple_base_project/simple_base_project.runs/synth_1/design_1_wrapper.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file design_1_wrapper_utilization_synth.rpt -pb design_1_wrapper_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Fri Oct 10 16:07:20 2025...

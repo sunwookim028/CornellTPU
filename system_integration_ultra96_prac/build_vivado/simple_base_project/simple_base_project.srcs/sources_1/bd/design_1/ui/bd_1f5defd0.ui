@@ -1,29 +1,29 @@
 {
    "ActiveEmotionalView":"Default View",
    "Default View_ScaleFactor":"1.0",
-   "Default View_TopLeft":"-802,-1997",
+   "Default View_TopLeft":"-793,-2075",
    "ExpandedHierarchyInLayout":"",
    "guistr":"# # String gsaved with Nlview 7.5.8 2022-09-21 7111 VDI=41 GEI=38 GUI=JA:10.0 TLS
 #  -string -flagsOSRD
-preplace inst const_driver_0 -pg 1 -lvl 3 -x 1110 -y -1190 -defaultsOSRD
 preplace inst clk_wiz_0 -pg 1 -lvl 1 -x 280 -y -1410 -defaultsOSRD
 preplace inst zynq_ultra_ps_e_0 -pg 1 -lvl 1 -x 280 -y -1220 -defaultsOSRD
-preplace inst ps8_0_axi_periph -pg 1 -lvl 4 -x 1380 -y -1560 -defaultsOSRD
+preplace inst ps8_0_axi_periph -pg 1 -lvl 4 -x 1400 -y -1560 -defaultsOSRD
 preplace inst rst_ps8_0_99M -pg 1 -lvl 2 -x 810 -y -1900 -defaultsOSRD
 preplace inst rst_clk_wiz_0_200M -pg 1 -lvl 2 -x 810 -y -1610 -defaultsOSRD
-preplace netloc zynq_ultra_ps_e_0_pl_clk0 1 0 4 -30 -1310 600 -1510 1010J -1530 1230
+preplace inst const_driver_v1_0_0 -pg 1 -lvl 4 -x 1400 -y -1250 -defaultsOSRD
+preplace netloc zynq_ultra_ps_e_0_pl_clk0 1 0 4 -30 -1310 600 -1510 NJ -1510 1240
 preplace netloc zynq_ultra_ps_e_0_pl_resetn0 1 0 2 -40 -1340 610
-preplace netloc rst_ps8_0_99M_peripheral_aresetn 1 2 2 N -1860 1220
-preplace netloc clk_wiz_0_clk_out1 1 1 3 590 -1500 990 -1520 NJ
+preplace netloc rst_ps8_0_99M_peripheral_aresetn 1 2 2 N -1860 1250
+preplace netloc clk_wiz_0_clk_out1 1 1 3 590 -1500 N -1500 1220J
 preplace netloc clk_wiz_0_locked 1 1 1 630 -1570n
-preplace netloc rst_clk_wiz_0_200M_peripheral_aresetn 1 2 2 1000 -1500 N
-preplace netloc zynq_ultra_ps_e_0_M_AXI_HPM0_LPD 1 1 3 620J -1710 NJ -1710 1210
-preplace netloc ps8_0_axi_periph_M00_AXI 1 2 3 1010 -1270 NJ -1270 1530
-levelinfo -pg 1 -60 280 810 1110 1380 1630
+preplace netloc rst_clk_wiz_0_200M_peripheral_aresetn 1 2 2 N -1570 1230
+preplace netloc zynq_ultra_ps_e_0_M_AXI_HPM0_LPD 1 1 3 620J -1710 NJ -1710 1160
+preplace netloc ps8_0_axi_periph_M00_AXI 1 3 2 1250 -1330 1550
+levelinfo -pg 1 -60 280 810 1120 1400 1630
 pagesize -pg 1 -db -bbox -sgen -210 -2200 1800 160
 "
 }
 {
-   "da_axi4_cnt":"2",
+   "da_axi4_cnt":"3",
    "da_board_cnt":"4"
 }
