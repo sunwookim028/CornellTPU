@@ -1,9 +1,9 @@
 `timescale 1ns/1ps
 
 module UnifiedBuffer #(
-  parameter int DATA_W = DATA_WIDTH,
-  parameter int ADDR_W = ADDR_WIDTH,
-  parameter int NB     = NUM_BANKS
+  parameter int DATA_W = DATA_WIDTH, // Width of data
+  parameter int ADDR_W = ADDR_WIDTH, // Width of address
+  parameter int NB     = NUM_BANKS   // Number of banks
 )(
   input  logic                       clk,
   input  logic                       reset,
@@ -22,16 +22,21 @@ module UnifiedBuffer #(
   input  logic [NB-1:0][DATA_W-1:0]     pe_data_in,
   output logic [NB-1:0][DATA_W-1:0]     pe_data_out
 );
-  // Wires between submodules
-  logic [BANK_BITS-1:0]              dma_bank_sel;
-  logic [ADDR_W-1:0]                 dma_local_addr;
 
-  logic [NB-1:0]                     bank_we;
-  logic [NB-1:0][ADDR_W-1:0]         bank_addr;
-  logic [NB-1:0][DATA_W-1:0]         bank_din;
-  logic [NB-1:0][DATA_W-1:0]         bank_dout;
+  // -------------------------------
+  // Internal wires between submodules
+  // -------------------------------
+  logic [BANK_BITS-1:0]              dma_bank_sel;     // Bank selected by DMA
+  logic [ADDR_W-1:0]                 dma_local_addr;   // Address within bank
 
-  // --- Address translation (global -> bank + local) ---
+  logic [NB-1:0]                     bank_we;          // Write enable per bank
+  logic [NB-1:0][ADDR_W-1:0]         bank_addr;        // Address per bank
+  logic [NB-1:0][DATA_W-1:0]         bank_din;         // Data in per bank
+  logic [NB-1:0][DATA_W-1:0]         bank_dout;        // Data out per bank
+
+  // -------------------------------
+  // Address translation: global DMA addr -> bank + local addr
+  // -------------------------------
   AddressTranslation #(
     .ADDR_W(ADDR_W),
     .NB(NB)
@@ -41,7 +46,9 @@ module UnifiedBuffer #(
     .local_addr(dma_local_addr)
   );
 
-  // --- Crossbar (static, no arbitration) ---
+  // -------------------------------
+  // Crossbar: routes DMA or PE signals to the correct bank
+  // -------------------------------
   Crossbar #(
     .DATA_W(DATA_W),
     .ADDR_W(ADDR_W),
@@ -65,7 +72,9 @@ module UnifiedBuffer #(
     .bank_din  (bank_din)
   );
 
-  // --- Banks ---
+  // -------------------------------
+  // Instantiate memory banks
+  // -------------------------------
   generate
     genvar i;
     for (i = 0; i < NB; i++) begin : g_banks
@@ -79,7 +88,10 @@ module UnifiedBuffer #(
         .din (bank_din[i]),
         .dout(bank_dout[i])
       );
+
+      // Connect each bank's output to its PE port
       assign pe_data_out[i] = bank_dout[i];
     end
   endgenerate
+
 endmodule
