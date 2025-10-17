@@ -1,14 +1,24 @@
 `timescale 1ns/1ps
 
 module AddressTranslation #(
-  parameter int ADDR_W = ADDR_WIDTH,
-  parameter int NB     = NUM_BANKS
+  parameter int ADDR_W = ADDR_WIDTH,  // Width of the full global address
+  parameter int NB     = NUM_BANKS    // Number of memory banks
 )(
-  input  logic [ADDR_W-1:0]          global_addr,
-  output logic [BANK_BITS-1:0]       bank_sel,
-  output logic [ADDR_W-1:0]          local_addr
+  input  logic [ADDR_W-1:0]    global_addr,   // Incoming global address
+  output logic [BANK_BITS-1:0] bank_sel,      // Which bank to access
+  output logic [ADDR_W-1:0]    local_addr     // Address inside that bank
 );
-  // Lower BANK_BITS choose bank; remaining bits index within the bank.
+
+  // ------------------------------------------------------------
+  // Address decoding scheme:
+  // - Lower BANK_BITS of the global address select the memory bank
+  // - Remaining upper bits form the local (intra-bank) address
+  // ------------------------------------------------------------
+
+  // Extract bank index from lower bits
   assign bank_sel   = global_addr[BANK_BITS-1:0];
+
+  // Shift right by BANK_BITS to remove bank bits -> local address
   assign local_addr = global_addr >> BANK_BITS;
+
 endmodule
