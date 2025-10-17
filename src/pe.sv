@@ -83,7 +83,7 @@ module pe #(
                     weight_reg_active <= weight_reg_inactive; // Loads inactive from previous edge
                 end
             end
-        // else: weight_reg_active retains its value
+            //else: weight_reg_active retains its value
 
             if (pe_valid_in) begin
                 pe_input_out <= pe_input_in;
