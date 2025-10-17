@@ -55,8 +55,6 @@ module pe #(
     //    end
     //end
 
-    // THIS IS ILLEGAL WHY DID THEY MIX COMBINATIONAL AND SEQUENTIAL LOGIC?!?!
-    // RACE CONDITION AND SOURCE OF SO MUCH DEBUGGING PAIN!
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst || !pe_enabled) begin
