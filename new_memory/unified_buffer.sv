@@ -1,9 +1,9 @@
 `timescale 1ns/1ps
 
 module UnifiedBuffer #(
-  parameter int DATA_W = DATA_WIDTH, // Width of data
-  parameter int ADDR_W = ADDR_WIDTH, // Width of address
-  parameter int NB     = NUM_BANKS   // Number of banks
+  parameter int DATA_W = 32, // Width of data
+  parameter int ADDR_W = 10, // Width of address
+  parameter int NB     = 4  // Number of banks
 )(
   input  logic                       clk,
   input  logic                       reset,
@@ -26,7 +26,7 @@ module UnifiedBuffer #(
   // -------------------------------
   // Internal wires between submodules
   // -------------------------------
-  logic [BANK_BITS-1:0]              dma_bank_sel;     // Bank selected by DMA
+  logic [2-1:0]              dma_bank_sel;     // Bank selected by DMA
   logic [ADDR_W-1:0]                 dma_local_addr;   // Address within bank
 
   logic [NB-1:0]                     bank_we;          // Write enable per bank

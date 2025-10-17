@@ -5,10 +5,10 @@ module tb_dma_ub;
   // -----------------------------
   // Parameters for UB and PEs
   // -----------------------------
-  localparam DATA_W = 16;                 // Data width per word
-  localparam ADDR_W = 8;                  // Address width per bank
+  localparam DATA_W = 32;                 // Data width per word
+  localparam ADDR_W = 10;                  // Address width per bank
   localparam NB     = 4;                  // Number of banks
-  localparam BANK_BITS = $clog2(NB);      // Bits needed to select a bank
+  localparam BANK_BITS = 2;      // Bits needed to select a bank
 
   // -----------------------------
   // Clock & Reset
@@ -84,7 +84,7 @@ module tb_dma_ub;
     for (i = 0; i < 8; i=i+1) begin
       dma_write_en = 1;               // Enable DMA write
       dma_addr = i;                    // Global address (maps to a bank)
-      dma_data_in = 16'hA0 + i;       // Sample data pattern: 0xA0, 0xA1, ...
+      dma_data_in = 32'hA000 + i;       // Sample data pattern: 0xA0, 0xA1, ...
       #10;                             // Wait 1 clock cycle for write
     end
     dma_write_en = 0;                  // Disable DMA write
@@ -110,8 +110,8 @@ module tb_dma_ub;
     // Expectation: each bank gets the correct PE data
     for (i = 0; i < NB; i=i+1) begin
       pe_write_en[i] = 1;              // Enable write for PE i
-      pe_addr[i]     = 8'h10 + i;      // Local address per bank
-      pe_data_in[i]  = 16'hB0 + i;     // Sample pattern
+      pe_addr[i]     = 10'h200 + i;      // Local address per bank
+      pe_data_in[i]  = 32'hB0000 + i;     // Sample pattern
     end
     #10;                                // Wait 1 cycle
     pe_write_en = 0;                     // Disable PE writes
@@ -123,13 +123,3 @@ module tb_dma_ub;
     end
     #10;                                 // Wait 1 cycle
     for (i = 0; i < NB; i=i+1) begin
-      $display("PE %0d read: 0x%0h", i, pe_data_out[i]);
-    end
-    pe_read_en = 0;
-
-    #50;
-    $display("===== Test Complete =====");
-    $stop;                               // Stop simulation
-  end
-
-endmodule

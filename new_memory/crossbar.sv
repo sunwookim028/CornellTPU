@@ -1,14 +1,14 @@
 `timescale 1ns/1ps
 
 module Crossbar #(
-  parameter int DATA_W = DATA_WIDTH,  // Width of each data word
-  parameter int ADDR_W = ADDR_WIDTH,  // Width of address within a bank
-  parameter int NB     = NUM_BANKS    // Number of banks
+  parameter int DATA_W = 32,  // Width of each data word
+  parameter int ADDR_W = 10,  // Width of address within a bank
+  parameter int NB     = 4   // Number of banks
 )(
   // ==== DMA side (global access path) ====
   input  logic                      dma_write_en,    // DMA write enable
   input  logic                      dma_read_en,     // DMA read enable
-  input  logic [BANK_BITS-1:0]      dma_bank_sel,    // Which bank DMA targets
+  input  logic [2-1:0]      dma_bank_sel,    // Which bank DMA targets
   input  logic [ADDR_W-1:0]         dma_local_addr,  // Address within that bank
   input  logic [DATA_W-1:0]         dma_data_in,     // Data written by DMA
   input  logic [NB-1:0][DATA_W-1:0] bank_data_out,   // Data read from all banks

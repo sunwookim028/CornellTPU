@@ -1,8 +1,8 @@
 `timescale 1ns/1ps
 
 module MemoryBank #(
-  parameter int DATA_W = DATA_WIDTH, // Width of each memory word
-  parameter int ADDR_W = ADDR_WIDTH  // Width of address bus
+  parameter int DATA_W = 32, // Width of each memory word
+  parameter int ADDR_W = 10  // Width of address bus
 )(
   input  logic                 clk,   // Clock signal
   input  logic                 we,    // Write enable
