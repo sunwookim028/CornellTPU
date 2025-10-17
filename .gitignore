@@ -4,4 +4,5 @@ src_jl_noted/
 waveforms/
 pymtl_tests
 sim_build/
+build/
 results.xml
