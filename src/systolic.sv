@@ -13,9 +13,6 @@ module systolic #(
     input logic [15:0] sys_data_in_21,
     input logic [15:0] sys_data_in_31,
     input logic [15:0] sys_data_in_41,
-    // Original:  input logic sys_start    // start signal
-    // But in the test file they set sys_start_1 and sys_start_2, and never reference sys_start. I think this is a bug.
-    // The different rows should have different start signals, right? With the staggering of inputs.
 
     input logic sys_start_1,    // start signal for row 1
     input logic sys_start_2,    // start signal for row 2
@@ -150,7 +147,7 @@ module systolic #(
     logic [3:0] pe_enabled; // This should be 4'b1111 for now! But will have to change when we parametrize
     assign pe_enabled = 4'b1111;
 
-pe pe11 (
+    pe pe11 (
         .clk(clk),
         .rst(rst),
         .pe_enabled(pe_enabled[0]),
@@ -503,15 +500,5 @@ pe pe11 (
     assign sys_valid_out_43 = pe_valid_out_43;
     assign sys_valid_out_44 = pe_valid_out_44;
 
-
-    //always@(posedge clk or posedge rst) begin
-    //    if(rst) begin
-    //        pe_enabled <= '0;
-    //    end else begin
-    //        if(ub_rd_col_size_valid_in) begin
-    //            pe_enabled <= (1 << ub_rd_col_size_in) - 1;
-    //        end
-    //    end
-    //end
 
 endmodule
