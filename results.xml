@@ -1,6 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1760320256" />
-    <testcase name="test_systolic_array_4x4_random_suite" classname="test_random_systolic" file="/Users/tanyadatta/repos/CornellTPU/test/test_random_systolic.py" lineno="245" time="1.0759620666503906" sim_time_ns="16990.001" ratio_time="15790.520434323558" />
+    <property name="random_seed" value="1760731734" />
+    <testcase name="test_systolic_array_4x4_random_suite" classname="test_random_systolic" file="/Users/tanyadatta/repos/CornellTPU/test/test_random_systolic.py" lineno="243" time="1.108569860458374" sim_time_ns="16990.001" ratio_time="15326.053509135578" />
   </testsuite>
 </testsuites>
