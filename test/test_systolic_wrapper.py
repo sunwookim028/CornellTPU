@@ -3,6 +3,18 @@ from cocotb.triggers import RisingEdge, Timer
 from cocotb.clock import Clock
 import numpy as np
 
+def to_fixed(val, frac_bits=8):
+    """Convert a float to 16-bit fixed point with 8 fractional bits."""
+    scaled = int(round(val * (1 << frac_bits)))
+    return scaled & 0xFFFF
+
+
+def from_fixed(val, frac_bits=8):
+    """Convert 16-bit fixed-point with 8 fractional bits to float."""
+    # Convert from 16-bit signed integer
+    if val & 0x8000:  # if sign bit is set
+        val = val - 0x10000
+    return float(val) / (1 << frac_bits)
 
 @cocotb.test()
 async def test_systolic_wrapper(dut):
@@ -26,27 +38,30 @@ async def test_systolic_wrapper(dut):
     N = 4
     DATA_WIDTH = 16
 
-    # Random small integer matrices
-    A = np.array([[1, 2, 3, 4],
-                  [5, 6, 7, 8],
-                  [9, 10, 11, 12],
-                  [13, 14, 15, 16]], dtype=np.int32)
+    X = np.array([
+        [0.1, 0.2, 0.3, 0.4],
+        [0.5, 0.6, 0.7, 0.8],
+        [0.9, 1.0, 1.1, 1.2],
+        [1.3, 1.4, 1.5, 1.6]
+        ], dtype = float)
 
-    B = np.array([[1, 0, 0, 0],
-                  [0, 1, 0, 0],
-                  [0, 0, 1, 0],
-                  [0, 0, 0, 1]], dtype=np.int32)
+    W = np.array([
+        [1., 0., 2.4, 0.],
+        [0., 1., 0., 0.],
+        [0., 0., 1., 0.7],
+        [0.2, 0., 0., 1.]
+        ], dtype = float)
 
-    # Expected output: A × B = A
-    expected = A @ B
+    expected = X @ W.T
+
 
     # ------------------------------------------------------------------
     # Drive matrices into the wrapper inputs
     # ------------------------------------------------------------------
     for i in range(N):
         for j in range(N):
-            dut.weight_matrix[i*N + j].value = int(A[i, j])
-            dut.x_matrix[i*N + j].value = int(B[i, j])
+            dut.weight_matrix[i*N + j].value = to_fixed(W[i][j])
+            dut.x_matrix[i*N + j].value = to_fixed(X[i][j])
 
     await RisingEdge(dut.clk)
 
@@ -73,10 +88,15 @@ async def test_systolic_wrapper(dut):
     # ------------------------------------------------------------------
     # Capture output matrix
     # ------------------------------------------------------------------
-    out = np.zeros((N, N), dtype=np.int32)
+    out = np.array([
+        [0.,0.,0.,0.],
+        [0.,0.,0.,0.],
+        [0.,0.,0.,0.],
+        [0.,0.,0.,0.]
+        ], dtype = float)
     for i in range(N):
         for j in range(N):
-            out[i, j] = dut.out_matrix[i*N + j].value.signed_integer
+            out[i][j] = round(from_fixed(dut.out_matrix[i*N + j].value), 2) # Adjust rounding as needed
 
     dut._log.info("Output matrix:")
     for r in out:
@@ -85,7 +105,8 @@ async def test_systolic_wrapper(dut):
     # ------------------------------------------------------------------
     # Verify
     # ------------------------------------------------------------------
-    if not np.array_equal(out, expected):
+
+    if (out.all() != expected.all()):
         dut._log.error(f"Expected:\n{expected}")
         raise cocotb.result.TestFailure("Matrix multiply mismatch")
     else:
