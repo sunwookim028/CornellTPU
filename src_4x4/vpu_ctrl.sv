@@ -328,9 +328,6 @@ module vpu_ctrl#(
         // All 4 lanes have valid outputs - reconstruct the complete 64-bit vector
         Z_out_buffer[vector_ctr] <= {vpu_data_out_1, vpu_data_out_2, vpu_data_out_3, vpu_data_out_4};
         vector_processed[vector_ctr] <= 1'b1;
-        
-        $display("Time: %0t - Storing output vector %0d: [%04h, %04h, %04h, %04h]", 
-                 $time, vector_ctr, vpu_data_out_1, vpu_data_out_2, vpu_data_out_3, vpu_data_out_4);
       end
     end
   end
@@ -359,14 +356,12 @@ module vpu_ctrl#(
       if (current_state == WAIT_Z_PRIME && mem_delay_ctr == 2'd1) begin
         for (int i = 0; i < B; i++) begin
           Z_prime_buffer[i] <= data_Z_prime[i];
-          $display("Time: %0t - Buffering Z_prime[%0d] = %016h", $time, i, data_Z_prime[i]);
         end
       end
       
       // Buffer bias data from UB - capture when memory provides data (after 1 cycle delay)
       if (current_state == WAIT_BIAS && mem_delay_ctr == 2'd1) begin
         bias_buffer <= data_b;
-        $display("Time: %0t - Buffering bias = %016h", $time, data_b);
       end
       
       // Set learning rate/leak factor (0.1 for leaky ReLU)
