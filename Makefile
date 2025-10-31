@@ -18,6 +18,7 @@ export PYTHONPATH := test:$(PYTHONPATH)
 # ********** IF YOU HAVE A NEW VERILOG FILE, ADD IT TO THE SOURCES VARIABLE
 SOURCES = src/pe.sv \
           src/systolic.sv \
+		  src/systolic_wrapper.sv \
           src/fixedpoint.sv
 
 # MODIFY 1) variable next to -s 
@@ -57,6 +58,11 @@ test_random_systolic: $(SIM_BUILD_DIR)
 	! grep failure results.xml
 	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
 
+test_systolic_wrapper: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s systolic_wrapper -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
 
 test_nn: $(SIM_BUILD_DIR)
 	$(IVERILOG) -o $(SIM_VVP) -s nn -s dump -g2012 $(SOURCES) test/dump_nn.sv
