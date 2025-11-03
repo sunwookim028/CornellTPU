@@ -20,7 +20,6 @@ module loopback #(parameter DATA_WIDTH = 32)(
     input  wire                   m_axis_ready
     );
 
-    // Backpressure: only ready when downstream ready
     assign s_axis_ready = m_axis_ready;
 
     always @(posedge axi_clk) begin
