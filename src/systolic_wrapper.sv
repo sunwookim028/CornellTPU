@@ -3,7 +3,7 @@
 
 module systolic_wrapper #(
     parameter int N = 4,
-    parameter int DATA_WIDTH = 16
+    parameter int DATA_WIDTH = 16 // This should be changed to 32 - we need systolic array switched to FP32
 )(
     input  logic clk,
     input  logic rst,

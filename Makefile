@@ -58,9 +58,15 @@ test_random_systolic: $(SIM_BUILD_DIR)
 	! grep failure results.xml
 	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
 
-test_systolic_wrapper: $(SIM_BUILD_DIR)
-	$(IVERILOG) -o $(SIM_VVP) -s systolic_wrapper -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper.sv
-	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+test_systolic_wrapper_adhoc: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s systolic_wrapper -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper_adhoc.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper_adhoc $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
+
+test_systolic_wrapper_random: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s systolic_wrapper -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper_random.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper_random $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
 	! grep failure results.xml
 	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
 
