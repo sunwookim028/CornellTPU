@@ -2,29 +2,29 @@
 `default_nettype none
 
 module leaky_relu_parent (
-    input logic clk,
-    input logic rst,
-    input logic signed [15:0] lr_leak_factor_in,
+  input logic clk,
+  input logic rst,
+  input logic signed [15:0] lr_leak_factor_in,
 
-    input logic lr_valid_1_in,
-    input logic lr_valid_2_in,
-    input logic lr_valid_3_in,
-    input logic lr_valid_4_in,
+  input logic lr_valid_1_in,
+  input logic lr_valid_2_in,
+  input logic lr_valid_3_in,
+  input logic lr_valid_4_in,
 
-    input logic signed [15:0] lr_data_1_in,
-    input logic signed [15:0] lr_data_2_in,
-    input logic signed [15:0] lr_data_3_in,
-    input logic signed [15:0] lr_data_4_in,
-    
-    output logic signed [15:0] lr_data_1_out,
-    output logic signed [15:0] lr_data_2_out,
-    output logic signed [15:0] lr_data_3_out,
-    output logic signed [15:0] lr_data_4_out,
-    
-    output logic lr_valid_1_out,
-    output logic lr_valid_2_out,
-    output logic lr_valid_3_out,
-    output logic lr_valid_4_out
+  input logic signed [15:0] lr_data_1_in,
+  input logic signed [15:0] lr_data_2_in,
+  input logic signed [15:0] lr_data_3_in,
+  input logic signed [15:0] lr_data_4_in,
+  
+  output logic signed [15:0] lr_data_1_out,
+  output logic signed [15:0] lr_data_2_out,
+  output logic signed [15:0] lr_data_3_out,
+  output logic signed [15:0] lr_data_4_out,
+  
+  output logic lr_valid_1_out,
+  output logic lr_valid_2_out,
+  output logic lr_valid_3_out,
+  output logic lr_valid_4_out
 );
 
   leaky_relu_child leaky_relu_col_1 (
