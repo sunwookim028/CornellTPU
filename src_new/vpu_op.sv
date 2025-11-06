@@ -11,12 +11,28 @@ module vpu_op(
   output logic [DATA_W-1:0] output
 );
 
+localparam ADD = 4'd0;
+localparam SUB = 4'd1;
+localparam MULT_CONST = 4'd2;
+
+logic [DATA_W-1:0] result;
 always_comb begin
   if(start) begin
     case(opcode)
-    
+    ADD: begin
+      result = operand0 + operand1;
+    end
+    SUB: begin
+      result = operand0 - operand1;
+    end
+    MULT_CONST: begin
+      result = operand0 * operand1;
+    end
+    default: result = '0;
     endcase
   end
 end
+
+assign output = result;
 
 endmodule

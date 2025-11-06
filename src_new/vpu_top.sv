@@ -75,10 +75,12 @@ end
 // local var for data
 logic [DATA_W-1:0] a_val, b_val, c_val, const_val;
 logic vpu_op_start;
+logic [2:0] count;
 
 always_comb begin
   next_state = current_state;
   vpu_op_start = 1'b0;
+  count = 3'd0;
   case (current_state)
   IDLE: begin
     if(mem_rdy) begin
@@ -88,16 +90,24 @@ always_comb begin
 
   DATA_A: begin
     addr_a = addr_a_ext;
-    if(mem_valid) begin
+    if(mem_valid & count < 4) begin
       a_val = data_a;
+      count = count + 1;
+      next_state = DATA_A;
+    end else if(count == 4) begin
+      count = 0;
       next_state = DATA_B;
     end
   end
 
   DATA_B: begin
     addr_b = addr_b_ext;
-    if(mem_valid) begin
+    if(mem_valid & count < 4) begin
       b_val = data_b;
+      count = count + 1;
+      next_state = DATA_B;
+    end else if(count == 4) begin
+      count = 0;
       next_state = DATA_CONST;
     end
   end
@@ -116,22 +126,38 @@ always_comb begin
   end
 
   DATA_C: begin
-    if(mem_rdy) begin
+    if(mem_rdy & count < 4) begin
       addr_c = addr_c_ext;
       data_c = c_val;
+      count = count + 1;
+      next_state = DATA_C;
+    end else if (count == 4) begin
+      count = 0;
       next_state = IDLE;
     end
   end
   endcase
 end
 
-vpu_op#(DATA_W,OP_W) op
+logic [DATA_W-1:0] op_1_result, op_2_result;
+vpu_op#(DATA_W,OP_W) op_1
 (
   .start(vpu_op_start),
   .operand0(a_val),
   .operand1(b_val),
   .opcode(opcode),
-  .output(c_val),
+  .output(op_1_result),
 );
+
+vpu_op#(DATA_W,OP_W) op_2
+(
+  .start(vpu_op_start),
+  .operand0(a_val),
+  .operand1(const_val),
+  .opcode(opcode),
+  .output(op_2_result)
+);
+
+assign c_val = (opcode == 2) ? op_2_result : op_1_result;
 
 endmodule
