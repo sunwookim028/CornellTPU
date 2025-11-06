@@ -1,9 +1,11 @@
-
 `timescale 1 ns / 1 ps
 
 	module tpu_top #
 	(
 		// Users to add parameters here
+		
+		parameter integer DATA_WIDTH = 32,
+        parameter integer ADDR_WIDTH = 13,
 
 		// User parameters ends
 		// Do not modify the parameters beyond this line
@@ -15,6 +17,18 @@
 	)
 	(
 		// Users to add ports here
+		
+		// AXI4-Stream Slave interface (input from DMA MM2S)
+        input  wire                   s_axis_valid,
+        input  wire [DATA_WIDTH-1:0]  s_axis_data,
+        input  wire                   s_axis_last,
+        output wire                   s_axis_ready,
+        
+        // AXI4-Stream Master interface (output to DMA S2MM)
+        output wire                    m_axis_valid,
+        output wire  [DATA_WIDTH-1:0]  m_axis_data,
+        output wire                    m_axis_last,
+        input  wire                   m_axis_ready,
 
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -68,7 +82,11 @@
 		.S_AXI_RDATA(s00_axi_rdata),
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
+		.S_AXI_RREADY(s00_axi_rready),
+		
+		// === NEW USER STATUS SIGNALS ===
+        .instr_ready_ext(instr_ready),
+        .stream_ready_ext(stream_ready)
 	);
 
 	// Add user logic here
@@ -89,13 +107,13 @@
     //  slv_reg6 : len          (number of words to process)
     // --------------------------------------------------------------------
     
-    wire [1:0]  instr     = tpu_top_v1_0_S00_AXI_inst.slv_reg0[1:0];   // instruction selector
+    wire [1:0]  instr     = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg0[1:0];   // instruction selector
     reg         instr_ready;        // set while idle
     reg         stream_ready;       // BRAM DMA handshake ready
-    wire [12:0] addr_a    = tpu_top_v1_0_S00_AXI_inst.slv_reg3[12:0];
-    wire [12:0] addr_b    = tpu_top_v1_0_S00_AXI_inst.slv_reg4[12:0];
-    wire [12:0] addr_out  = tpu_top_v1_0_S00_AXI_inst.slv_reg5[12:0];
-    wire [31:0] len       = tpu_top_v1_0_S00_AXI_inst.slv_reg6;
+    wire [12:0] addr_a    = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg3[12:0];
+    wire [12:0] addr_b    = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg4[12:0];
+    wire [12:0] addr_out  = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg5[12:0];
+    wire [31:0] len       = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg6;
     
     // --------------------------------------------------------------------
     //  Internal control signals
@@ -103,7 +121,7 @@
     reg start_write, start_read, start_compute;
     wire bram_done, compute_done;
     
-    // BRAM <-> compute interface wires
+    // BRAM to compute interface wires (port b)
     wire [12:0] comp_addr_b;
     wire [31:0] comp_din_b, comp_dout_b;
     wire        comp_en_b, comp_we_b;
@@ -185,10 +203,10 @@
     
   
     //  Write back instr_ready / stream_ready flags to AXI registers 
-    always @(*) begin
-        tpu_top_v1_0_S00_AXI_inst.slv_reg1 = {31'd0, instr_ready};
-        tpu_top_v1_0_S00_AXI_inst.slv_reg2 = {31'd0, stream_ready};
-    end
+//    always @(*) begin
+//        tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg1 = {31'd0, instr_ready};
+//        tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg2 = {31'd0, stream_ready};
+//    end
     
 
     //  Instantiate submodules
@@ -228,19 +246,19 @@
     ) u_compute_top (
         .clk(s00_axi_aclk),
         .rst_n(s00_axi_aresetn),
-        .start_compute(start_compute),
+        .start(start_compute),
         .done(compute_done),
     
         // BRAM port connection (shared BRAM)
-        .addr_b(comp_addr_b),
-        .din_b (comp_din_b),
-        .dout_b(comp_dout_b),
-        .en_b  (comp_en_b),
-        .we_b  (comp_we_b),
+        .bram_addr_b(comp_addr_b),
+        .bram_din_b (comp_din_b),
+        .bram_dout_b(comp_dout_b),
+        .bram_en_b  (comp_en_b),
+        .bram_we_b  (comp_we_b),
     
         // control addresses for compute operation
         .addr_a(addr_a),
-        .addr_b_base(addr_b),
+        .addr_b(addr_b),
         .addr_out(addr_out),
         .len(len)
     );

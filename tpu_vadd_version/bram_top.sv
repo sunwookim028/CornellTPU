@@ -78,6 +78,8 @@ module bram_top #(
             m_axis_valid <= 0;
             m_axis_data  <= 0;
             m_axis_last  <= 0;
+            bram_en_a     <= 0;
+            bram_we_a     <= 0;
             done         <= 0;
         end else begin
             // Default values
@@ -110,7 +112,7 @@ module bram_top #(
                         bram_din_a  <= s_axis_data;
                         addr_a      <= addr_a + 1;
                         word_count  <= word_count + 1;
-                        if (word_count == len - 1) state <= DONE;
+                        if (s_axis_last || word_count == len - 1) state <= DONE;
                     end
                 end
                 
@@ -122,6 +124,7 @@ module bram_top #(
                 
                     // Drive output data
                     m_axis_data   <= bram_dout_a_reg;
+                    m_axis_last   <= (word_count == len - 1);
                 
                     if (m_axis_ready) begin
                         // consumer accepted data, increment
@@ -165,4 +168,3 @@ module bram_top #(
     );
 
 endmodule
-

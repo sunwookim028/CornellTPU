@@ -42,10 +42,14 @@ module compute_top #(
 );
 
     // FSM state definitions
-    typedef enum logic [2:0] {
+    typedef enum logic [4:0] {
         IDLE,
         READ_A,
+        READ_A_W1,
+        READ_A_W2,
         READ_B,
+        READ_B_W1,
+        READ_B_W2,
         WRITE_OUT,
         DONE
     } state_t;
@@ -94,8 +98,16 @@ module compute_top #(
                     bram_en_b   <= 1'b1;
                     bram_we_b   <= 1'b0;
                     bram_addr_b <= addr_a + i;
-                    data_a      <= bram_dout_b;
-                    state       <= READ_B;
+                    state       <= READ_A_W1;
+                end
+                
+                READ_A_W1: begin 
+                    state <= READ_A_W2;
+                end
+                
+                READ_A_W2: begin
+                    data_a <= bram_dout_b;
+                    state <= READ_B;
                 end
 
                 // Read B[i] from BRAM
@@ -103,8 +115,16 @@ module compute_top #(
                     bram_en_b   <= 1'b1;
                     bram_we_b   <= 1'b0;
                     bram_addr_b <= addr_b + i;
-                    data_b      <= bram_dout_b;
-                    state       <= WRITE_OUT;
+                    state       <= READ_B_W1;
+                end
+                
+                READ_B_W1: begin
+                    state <= READ_B_W2;
+                end
+                
+                READ_B_W2: begin
+                    data_b <= bram_dout_b;
+                    state <= WRITE_OUT;
                 end
 
                 // Write SUM to C[i] in BRAM
@@ -114,7 +134,7 @@ module compute_top #(
                     bram_addr_b <= addr_out + i;
                     bram_din_b  <= data_sum;
 
-                    if (i == len - 1) begin
+                    if (i >= len - 1) begin
                         state <= DONE;
                     end else begin
                         i     <= i + 1;

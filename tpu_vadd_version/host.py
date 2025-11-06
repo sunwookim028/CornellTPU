@@ -66,14 +66,15 @@ def main():
     print(hex(mmio.read(0x10))+ "\n")
     print(hex(mmio.read(0x14))+ "\n")
     print(hex(mmio.read(0x18)))
+
     print("\n--- Stage 1: Write vectors to BRAM via DMA ---")
-    # wait_for_flag(mmio, "instr_ready", 1)
+    wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["addr_a"], 0x0000)   # BRAM base A
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], WRITE_BRAM)
 
     # wait until stream ready to accept DMA data
-    # wait_for_flag(mmio, "stream_ready", 1)
+    wait_for_flag(mmio, "stream_ready", 1)
 
     # Send A first
     in_buf[:] = a
@@ -88,8 +89,8 @@ def main():
     print("Write to BRAM complete.")
 
     print("\n--- Stage 2: Compute ---")
-    time.sleep(1)
-    # wait_for_flag(mmio, "instr_ready", 1)
+    # time.sleep(1)
+    wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["addr_a"], 0x0000)
     mmio.write(REG_ADDR["addr_b"], length)   # B vector stored right after A
     mmio.write(REG_ADDR["addr_out"], length * 2)
@@ -97,20 +98,19 @@ def main():
     mmio.write(REG_ADDR["instr"], COMPUTE)
 
     print("Waiting for computation to finish...")
-    time.sleep(2)
-    # wait_for_flag(mmio, "instr_ready", 1)
+    wait_for_flag(mmio, "instr_ready", 1)
     print("Computation done.")
 
     print("\n--- Stage 3: Read results from BRAM ---")
-    time.sleep(2)
-    # wait_for_flag(mmio, "instr_ready", 1)
+    # time.sleep(2)
+    wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["addr_a"], length * 2)
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], READ_BRAM)
-    # wait_for_flag(mmio, "stream_ready", 1)
+    wait_for_flag(mmio, "stream_ready", 1)
     dma.recvchannel.transfer(out_buf)
     dma.recvchannel.wait()
-    time.sleep(2)
+    # time.sleep(2)
 
     result = np.copy(out_buf)
 
