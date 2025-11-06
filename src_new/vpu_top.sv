@@ -145,6 +145,10 @@ vpu_op#(DATA_W,OP_W) op_2
   .output(op_2_result)
 );
 
+/* 
+if the operation is done with the constant, depending on opcode, then accept 
+result from vpu_op using operand1 = const_val
+*/
 assign c_val = (opcode == 2) ? op_2_result : op_1_result;
 
 endmodule
