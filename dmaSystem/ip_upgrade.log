@@ -1,0 +1,407 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 16:14:06 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 18) to (Rev. 19)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 14:01:23 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 17) to (Rev. 18)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 13:38:33 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 16) to (Rev. 17)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 01:58:19 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 15) to (Rev. 16)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 01:36:31 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 14) to (Rev. 15)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 01:07:31 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 13) to (Rev. 14)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Fri Nov  7 00:27:24 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 12) to (Rev. 13)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 23:37:34 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 11) to (Rev. 12)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 04:41:33 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 10) to (Rev. 11)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 03:45:51 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 9) to (Rev. 10)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 03:17:07 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 8) to (Rev. 9)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 02:36:04 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 7) to (Rev. 8)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 01:58:00 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 6) to (Rev. 7)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Thu Nov  6 00:49:11 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the update of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0 (Rev. 6)) to current project options.
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Wed Nov  5 17:31:18 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 5) to (Rev. 6)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Wed Nov  5 17:29:00 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 4) to (Rev. 5)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Wed Nov  5 17:26:50 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 3) to (Rev. 4)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Wed Nov  5 17:21:50 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_tpu_top_0_0'
+
+1. Summary
+----------
+
+SUCCESS in the upgrade of design_1_tpu_top_0_0 (xilinx.com:user:tpu_top:1.0) from (Rev. 2) to (Rev. 3)
+
+
+
+
+
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (win64) Build 6140274 Thu May 22 00:12:29 MDT 2025
+| Date         : Mon Nov  3 01:35:53 2025
+| Host         : Mukund_laptop running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xczu3eg-sbva484-1-i
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_1_loopback_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_1_loopback_0_0 (xilinx.com:user:loopback:1.0) from (Rev. 2) to (Rev. 3)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_1_loopback_0_0'. These changes may impact your design.
+
+
+-Upgrade has added port 'm_axis_last'
+
+-Upgrade has added port 's_axis_last'
+
+

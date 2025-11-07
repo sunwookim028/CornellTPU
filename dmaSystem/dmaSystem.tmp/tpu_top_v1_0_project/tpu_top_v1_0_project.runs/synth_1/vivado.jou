@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Thu May 22 00:12:29 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Fri Nov  7 16:09:41 2025
+# Process ID         : 57528
+# Current directory  : c:/CornellTPU/dmaSystem/dmaSystem.tmp/tpu_top_v1_0_project/tpu_top_v1_0_project.runs/synth_1
+# Command line       : vivado.exe -log tpu_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source tpu_top.tcl
+# Log file           : c:/CornellTPU/dmaSystem/dmaSystem.tmp/tpu_top_v1_0_project/tpu_top_v1_0_project.runs/synth_1/tpu_top.vds
+# Journal file       : c:/CornellTPU/dmaSystem/dmaSystem.tmp/tpu_top_v1_0_project/tpu_top_v1_0_project.runs/synth_1\vivado.jou
+# Running On         : Mukund_laptop
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26100
+# Processor Detail   : Intel(R) Core(TM) Ultra 7 165H
+# CPU Frequency      : 3072 MHz
+# CPU Physical cores : 16
+# CPU Logical cores  : 22
+# Host memory        : 33765 MB
+# Swap memory        : 20771 MB
+# Total Virtual      : 54536 MB
+# Available Virtual  : 13234 MB
+#-----------------------------------------------------------
+source tpu_top.tcl -notrace

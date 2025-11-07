@@ -1,0 +1,4 @@
+xpm_memory.sv,systemverilog,xpm,../ip/xpm/xpm_memory/hdl/xpm_memory.sv,incdir="../../../../../../../../Xilinx/2025.1/Vivado/data/rsb/busdef"
+blk_mem_gen_v8_4.v,verilog,blk_mem_gen_v8_4_11,../../../ipstatic/simulation/blk_mem_gen_v8_4.v,incdir="../../../../../../../../Xilinx/2025.1/Vivado/data/rsb/busdef"
+blk_mem_gen_0.v,verilog,xil_defaultlib,../../../../tpu_top_v1_0_project.gen/sources_1/ip/blk_mem_gen_0/sim/blk_mem_gen_0.v,incdir="../../../../../../../../Xilinx/2025.1/Vivado/data/rsb/busdef"
+glbl.v,Verilog,xil_defaultlib,glbl.v
