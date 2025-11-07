@@ -1,6 +1,5 @@
-// ALU-style operation module
-
-module vpu_op(
+// ALU-style VPU operations
+module vpu_op #(
   parameter int DATA_W = 32,
   parameter int OP_W = 4
 )(
@@ -8,15 +7,60 @@ module vpu_op(
   input logic [DATA_W-1:0] operand0,
   input logic [DATA_W-1:0] operand1,
   input logic [OP_W-1:0] opcode,
-  output logic [DATA_W-1:0] output
+  output logic [DATA_W-1:0] result_out
 );
 
+// localparams for states
+localparam ADD = 4'd0;
+localparam SUB = 4'd1;
+localparam RELU = 4'd2;
+
+// internal signalas for computation result storing
+logic [DATA_W-1:0] result;
+logic [DATA_W-1:0] adder_a, adder_b;
+logic [DATA_W-1:0] adder_result;
+logic [DATA_W-1:0] relu_result;
+
+// fp32 adder instance ; this can be adjusted for fxp
+assign adder_a = operand0;
+assign adder_b = (opcode == SUB) ? {~operand1[DATA_W-1], operand1[DATA_W-2:0]} : operand1;
+parameterized_adder #(.FORMAT("FP32")) fp32_adder (
+  .a(adder_a),
+  .b(adder_b),
+  .result(adder_result)
+);
+
+// ReLU operation 
 always_comb begin
-  if(start) begin
-    case(opcode)
-    
-    endcase
+  relu_result = {DATA_W{1'b0}};
+  
+  if (!operand0[DATA_W-1]) begin
+    relu_result = operand0;
   end
 end
+
+// opcode decoding + proper operation
+always_comb begin
+  if (start) begin
+    case (opcode)
+      ADD: begin
+        result = adder_result;
+      end
+      SUB: begin
+        result = adder_result;
+      end
+      RELU: begin
+        result = relu_result;
+      end
+      default: begin
+        result = {DATA_W{1'b0}};
+      end
+    endcase
+  end else begin
+    result = {DATA_W{1'b0}};
+  end
+end
+
+assign result_out = result;
 
 endmodule
