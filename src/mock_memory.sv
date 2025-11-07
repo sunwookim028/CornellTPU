@@ -5,7 +5,7 @@ module mock_memory #(
     parameter int N = 4,
     parameter int DATA_WIDTH = 16,
     parameter int BANKING_FACTOR = 1,
-    parameter int ADDRESS_WIDTH = 32,
+    parameter int ADDRESS_WIDTH = 13,
     parameter logic [ADDRESS_WIDTH-1:0] BASE_ADDR_W = 32'h00000000,
     parameter logic [ADDRESS_WIDTH-1:0] BASE_ADDR_X = 32'h00001000,
     parameter int MEM_LATENCY = 2  // desired: 2-cycle latency total

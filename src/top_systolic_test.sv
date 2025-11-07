@@ -35,6 +35,8 @@ module top_systolic_test;
     assign base_addr_x = BASE_ADDR_X;
     assign base_addr_out = BASE_ADDR_OUT;
 
+    logic signed [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
+
     // DUT
     systolic_wrapper #(
         .N(N),
