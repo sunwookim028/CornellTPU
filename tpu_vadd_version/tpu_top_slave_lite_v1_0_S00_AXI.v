@@ -18,6 +18,11 @@
 		
 		input  wire instr_ready_ext,
         input  wire stream_ready_ext,
+        output wire [31:0] slv_reg0_out,
+        output wire [31:0] slv_reg3_out,
+        output wire [31:0] slv_reg4_out,
+        output wire [31:0] slv_reg5_out,
+        output wire [31:0] slv_reg6_out,
 
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -355,6 +360,12 @@
         else
             slv_reg2 <= {31'b0, stream_ready_ext}; // bit 0 = stream_ready
     end
+    
+    assign slv_reg0_out = slv_reg0;
+    assign slv_reg3_out = slv_reg3;
+    assign slv_reg4_out = slv_reg4;
+    assign slv_reg5_out = slv_reg5;
+    assign slv_reg6_out = slv_reg6;
 	// User logic ends
 
 	endmodule

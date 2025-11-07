@@ -16,9 +16,9 @@ REG_ADDR = {
 }
 
 # Instruction opcodes
-WRITE_BRAM = 0
-READ_BRAM  = 1
-COMPUTE    = 2
+WRITE_BRAM = 1
+READ_BRAM  = 2
+COMPUTE    = 3
 
 
 def wait_for_flag(mmio, name, expected=1, poll_delay=0.001):
@@ -58,20 +58,31 @@ def main():
     in_buf = allocate(shape=(length,), dtype=np.uint32)
     out_buf = allocate(shape=(length,), dtype=np.uint32)
 
-    mmio.write(0x00, 0xABCD)
-    print(hex(mmio.read(0x00))+ "\n")
-    print(hex(mmio.read(0x04))+ "\n")
-    print(hex(mmio.read(0x08))+ "\n")
-    print(hex(mmio.read(0x0C))+ "\n")
-    print(hex(mmio.read(0x10))+ "\n")
-    print(hex(mmio.read(0x14))+ "\n")
-    print(hex(mmio.read(0x18)))
+    # mmio.write(0x00, 0xABCD)
+    # print(hex(mmio.read(0x00))+ "\n")
+    # mmio.write(0x04, 0xABCD)
+    # print(hex(mmio.read(0x04))+ "\n")
+    # mmio.write(0x08, 0xABCD)
+    # print(hex(mmio.read(0x08))+ "\n")
+    # mmio.write(0x0C, 0xABCD)
+    # print(hex(mmio.read(0x0C))+ "\n")
+    # mmio.write(0x10, 0xABCD)
+    # print(hex(mmio.read(0x10))+ "\n")
+    # mmio.write(0x14, 0xABCD)
+    # print(hex(mmio.read(0x14))+ "\n")
+    # mmio.write(0x18, 0xABCD)
+    # print(hex(mmio.read(0x18)))
 
     print("\n--- Stage 1: Write vectors to BRAM via DMA ---")
     wait_for_flag(mmio, "instr_ready", 1)
-    mmio.write(REG_ADDR["addr_a"], 0x0000)   # BRAM base A
+    print("\n ready for instruction")
+    base = 0x0000
+    mmio.write(REG_ADDR["addr_a"], base)   # BRAM base A
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], WRITE_BRAM)
+    print(mmio.read(REG_ADDR["addr_a"]))   # BRAM base A
+    print(mmio.read(REG_ADDR["length"]))
+    print(mmio.read(REG_ADDR["instr"]))
 
     # wait until stream ready to accept DMA data
     wait_for_flag(mmio, "stream_ready", 1)
@@ -81,36 +92,106 @@ def main():
     dma.sendchannel.transfer(in_buf)
     dma.sendchannel.wait()
 
+    wait_for_flag(mmio, "instr_ready", 1)
+    mmio.write(REG_ADDR["instr"], 0) # sets it back to IDLE state
+    print("\n ready for instruction")
+    mmio.write(REG_ADDR["addr_a"], base + length)   # BRAM base A
+    mmio.write(REG_ADDR["length"], length)
+    mmio.write(REG_ADDR["instr"], WRITE_BRAM)
+
+    print(mmio.read(REG_ADDR["addr_a"]))   
+    print(mmio.read(REG_ADDR["length"]))
+    print(mmio.read(REG_ADDR["instr"]))
+
+    # wait until stream ready to accept DMA data
+    wait_for_flag(mmio, "stream_ready", 1)
+
+
     # Send B
     in_buf[:] = b
+    print("\n=== DMA Status BEFORE B transfer ===")
+    print("MM2S Control (0x00):", hex(mmio.read(0x00)))
+    print("MM2S Status  (0x04):", hex(mmio.read(0x04)))
+    print("instr_ready:", mmio.read(REG_ADDR["instr_ready"]))
+    print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
+
     dma.sendchannel.transfer(in_buf)
+
+    # Optional short delay before waiting, helps see mid-transfer state
+    time.sleep(0.1)
+
+    print("\n=== DMA Status BEFORE wait() for B ===")
+    print("MM2S Status  (0x04):", hex(mmio.read(0x04)))
+
     dma.sendchannel.wait()
 
+    print("\n=== DMA Status AFTER wait() for B ===")
+    print("MM2S Status  (0x04):", hex(mmio.read(0x04)))
+    print("instr_ready:", mmio.read(REG_ADDR["instr_ready"]))
+    print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
+
+    wait_for_flag(mmio, "instr_ready", 1)
+    mmio.write(REG_ADDR["instr"], 0)
     print("Write to BRAM complete.")
 
     print("\n--- Stage 2: Compute ---")
-    # time.sleep(1)
-    wait_for_flag(mmio, "instr_ready", 1)
-    mmio.write(REG_ADDR["addr_a"], 0x0000)
-    mmio.write(REG_ADDR["addr_b"], length)   # B vector stored right after A
-    mmio.write(REG_ADDR["addr_out"], length * 2)
+    print("\n ready for instruction")
+    mmio.write(REG_ADDR["addr_a"], base)
+    mmio.write(REG_ADDR["addr_b"], base + length)   # B vector stored right after A
+    mmio.write(REG_ADDR["addr_out"], base + (length * 2))
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], COMPUTE)
 
+    print(mmio.read(REG_ADDR["addr_a"]))
+    print(mmio.read(REG_ADDR["addr_b"])) 
+    print(mmio.read(REG_ADDR["addr_out"]))    
+    print(mmio.read(REG_ADDR["length"]))
+    print(mmio.read(REG_ADDR["instr"]))
+
     print("Waiting for computation to finish...")
     wait_for_flag(mmio, "instr_ready", 1)
+    mmio.write(REG_ADDR["instr"], 0)
     print("Computation done.")
 
     print("\n--- Stage 3: Read results from BRAM ---")
-    # time.sleep(2)
-    wait_for_flag(mmio, "instr_ready", 1)
+
+    # wait_for_flag(mmio, "stream_ready", 1)
+    # print("stream_ready=1 detected — starting recvchannel")
+    print("\n=== DMA Status BEFORE transfer ===")
+    print("S2MM Control (0x30):", hex(mmio.read(0x30)))
+    print("S2MM Status  (0x34):", hex(mmio.read(0x34)))
+    print("instr_ready:", mmio.read(REG_ADDR["instr_ready"]))
+    print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
+
+    dma.recvchannel.stop()
+    dma.recvchannel.start()
+
+    dma.recvchannel.transfer(out_buf)
+
+    print("\n=== DMA Status BEFORE wait() ===")
+    print("S2MM Status  (0x34):", hex(mmio.read(0x34)))
+    print("S2MM Destination address (0x48):", hex(mmio.read(0x48)))
+
+    # wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["addr_a"], length * 2)
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], READ_BRAM)
-    wait_for_flag(mmio, "stream_ready", 1)
-    dma.recvchannel.transfer(out_buf)
+
+    print(mmio.read(REG_ADDR["addr_a"]))   
+    print(mmio.read(REG_ADDR["length"]))
+    print(mmio.read(REG_ADDR["instr"]))
+
+
+    # This is the line that currently stalls
     dma.recvchannel.wait()
-    # time.sleep(2)
+
+    print("\n=== DMA Status AFTER wait() ===")
+    print("S2MM Status  (0x34):", hex(mmio.read(0x34)))
+    print("instr_ready:", mmio.read(REG_ADDR["instr_ready"]))
+    print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
+
+    wait_for_flag(mmio, "instr_ready", 1)
+    mmio.write(REG_ADDR["instr"], 0)
 
     result = np.copy(out_buf)
 

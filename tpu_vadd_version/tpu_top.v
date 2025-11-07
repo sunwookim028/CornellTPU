@@ -1,3 +1,4 @@
+
 `timescale 1 ns / 1 ps
 
 	module tpu_top #
@@ -57,6 +58,23 @@
 		output wire  s00_axi_rvalid,
 		input wire  s00_axi_rready
 	);
+	
+	    // 32-bit buses from AXI slave
+    wire [31:0] slv_reg0_bus;
+    wire [31:0] slv_reg3_bus;
+    wire [31:0] slv_reg4_bus;
+    wire [31:0] slv_reg5_bus;
+    wire [31:0] slv_reg6_bus;
+
+
+    wire [1:0]  instr = slv_reg0_bus[1:0];   // instruction selector
+    reg         instr_ready;        // set while idle
+    reg         stream_ready;       // BRAM DMA handshake ready
+    wire [12:0] addr_a    = slv_reg3_bus[12:0];
+    wire [12:0] addr_b    = slv_reg4_bus[12:0];
+    wire [12:0] addr_out  = slv_reg5_bus[12:0];
+    wire [31:0] len       = slv_reg6_bus;
+    
 // Instantiation of Axi Bus Interface S00_AXI
 	tpu_top_slave_lite_v1_0_S00_AXI # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -86,7 +104,12 @@
 		
 		// === NEW USER STATUS SIGNALS ===
         .instr_ready_ext(instr_ready),
-        .stream_ready_ext(stream_ready)
+        .stream_ready_ext(stream_ready),
+        .slv_reg0_out(slv_reg0_bus),
+        .slv_reg3_out(slv_reg3_bus),
+        .slv_reg4_out(slv_reg4_bus),
+        .slv_reg5_out(slv_reg5_bus),
+        .slv_reg6_out(slv_reg6_bus)
 	);
 
 	// Add user logic here
@@ -107,13 +130,7 @@
     //  slv_reg6 : len          (number of words to process)
     // --------------------------------------------------------------------
     
-    wire [1:0]  instr     = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg0[1:0];   // instruction selector
-    reg         instr_ready;        // set while idle
-    reg         stream_ready;       // BRAM DMA handshake ready
-    wire [12:0] addr_a    = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg3[12:0];
-    wire [12:0] addr_b    = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg4[12:0];
-    wire [12:0] addr_out  = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg5[12:0];
-    wire [31:0] len       = tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg6;
+
     
     // --------------------------------------------------------------------
     //  Internal control signals
@@ -134,14 +151,15 @@
     localparam EXEC_COMPUTE = 3'd3;
     localparam WAIT_DONE    = 3'd4;
     
-    reg [2:0] state;
+    reg [2:0] state = IDLE;
+    
     
     //  Sequential FSM logic
     always @(posedge s00_axi_aclk or negedge s00_axi_aresetn) begin
         if (!s00_axi_aresetn) begin
             state         <= IDLE;
             instr_ready   <= 1'b1;
-            stream_ready  <= 1'b0;
+            stream_ready  <= 1'b1;
             start_write   <= 1'b0;
             start_read    <= 1'b0;
             start_compute <= 1'b0;
@@ -150,25 +168,25 @@
             start_write   <= 1'b0;
             start_read    <= 1'b0;
             start_compute <= 1'b0;
-            stream_ready  <= 1'b0;
     
             case (state)
                 //------------------------------------------------------
                 IDLE: begin
                     instr_ready <= 1'b1; // ready for next instruction
-                    if (instr == 2'd0) begin // WRITE_BRAM
+                    if (instr == 2'd1) begin // WRITE_BRAM
                         instr_ready  <= 1'b0;
                         start_write  <= 1'b1;
                         stream_ready <= 1'b1; // BRAM ready for DMA stream
                         state        <= EXEC_WRITE;
-                    end else if (instr == 2'd1) begin // READ_BRAM
+                    end else if (instr == 2'd2) begin // READ_BRAM
                         instr_ready  <= 1'b0;
                         start_read   <= 1'b1;
                         stream_ready <= 1'b1;
                         state        <= EXEC_READ;
-                    end else if (instr == 2'd2) begin // COMPUTE
+                    end else if (instr == 2'd3) begin // COMPUTE
                         instr_ready  <= 1'b0;
                         start_compute <= 1'b1;
+                        stream_ready <= 1'b0;
                         state        <= EXEC_COMPUTE;
                     end
                 end
@@ -176,12 +194,14 @@
                 //------------------------------------------------------
                 EXEC_WRITE: begin
                     // Wait until BRAM transfer finishes
+                    stream_ready <= 1'b1;
                     if (bram_done)
                         state <= WAIT_DONE;
                 end
     
                 //------------------------------------------------------
                 EXEC_READ: begin
+                    stream_ready <= 1'b1;
                     if (bram_done)
                         state <= WAIT_DONE;
                 end
@@ -195,7 +215,9 @@
                 //------------------------------------------------------
                 WAIT_DONE: begin
                     instr_ready <= 1'b1;
-                    state <= IDLE;
+                    if (instr == 2'd0) begin
+                        state <= IDLE;
+                    end
                 end
             endcase
         end
@@ -264,5 +286,3 @@
     );
 
 	// User logic ends
-
-	endmodule

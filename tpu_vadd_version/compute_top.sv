@@ -54,7 +54,7 @@ module compute_top #(
         DONE
     } state_t;
 
-    state_t state;
+    state_t state = IDLE;
 
     // Loop counter and temporary storage
     logic [31:0] i;
@@ -81,7 +81,6 @@ module compute_top #(
             data_b       <= '0;
         end else begin
             done      <= 1'b0;
-            bram_en_b <= 1'b0;
             bram_we_b <= 1'b0;
 
             case (state)
@@ -145,6 +144,7 @@ module compute_top #(
                 // Raise done and return to idle
                 DONE: begin
                     done  <= 1'b1;
+                    bram_en_b <= 1'b0;
                     state <= IDLE;
                 end
             endcase

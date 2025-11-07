@@ -56,7 +56,7 @@ module bram_top #(
 
     // Internal signals
     typedef enum logic [1:0] {IDLE, WRITE_STREAM, READ_STREAM, DONE} state_t;
-    state_t state;
+    state_t state = IDLE;
 
     logic [ADDR_WIDTH-1:0] addr_a;
     logic [31:0] word_count;
@@ -64,10 +64,20 @@ module bram_top #(
     logic bram_en_a, bram_we_a;
     logic [DATA_WIDTH-1:0] bram_din_a;
     logic [DATA_WIDTH-1:0] bram_dout_a_reg;
+    logic [1:0] read_latency;
 
     // FSM for DMA transfer
     always_ff @(posedge clk) begin
         bram_dout_a_reg <= bram_dout_a;
+    end
+    
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            read_latency <= 0;
+        end else if (state != READ_STREAM) begin
+            // Reset latency counter when leaving this state
+            read_latency <= 0;
+        end
     end
     
     always_ff @(posedge clk or negedge rst_n) begin
@@ -83,9 +93,6 @@ module bram_top #(
             done         <= 0;
         end else begin
             // Default values
-            m_axis_valid <= 0;
-            m_axis_data  <= 0;
-            m_axis_last  <= 0;
             bram_en_a     <= 0;
             bram_we_a     <= 0;
             done          <= 0;
@@ -118,27 +125,33 @@ module bram_top #(
                 
                 //bram to dram
                 READ_STREAM:  begin
-                    bram_en_a     <= 1;
-                    bram_we_a     <= 0;
-                    m_axis_valid  <= 1;   // always presenting valid data
+                   bram_en_a <= 1;
+                    bram_we_a <= 0;
                 
-                    // Drive output data
-                    m_axis_data   <= bram_dout_a_reg;
-                    m_axis_last   <= (word_count == len - 1);
+                    // Wait for BRAM to produce first word (2-cycle latency)
+                    if (read_latency < 2) begin
+                        read_latency <= read_latency + 1;
+                        m_axis_valid <= 0;
+                    end else begin
+                        // Stream data continuously
+                        m_axis_valid <= 1;
+                        m_axis_data  <= bram_dout_a_reg;
+                        m_axis_last  <= (word_count == len - 1);
                 
-                    if (m_axis_ready) begin
-                        // consumer accepted data, increment
-                        addr_a      <= addr_a + 1;
-                        word_count  <= word_count + 1;
+                        if (m_axis_ready) begin
+                            addr_a     <= addr_a + 1;
+                            word_count <= word_count + 1;
                 
-                        if (word_count == len - 1) begin
-                            m_axis_valid <= 0;
-                            state <= DONE;
+                            if (word_count == len - 1) begin
+                                state        <= DONE;
+                            end
                         end
                     end
+                    
                 end 
 
                 DONE: begin
+                    m_axis_valid <= 0;
                     done  <= 1;
                     state <= IDLE;
                 end
@@ -168,3 +181,4 @@ module bram_top #(
     );
 
 endmodule
+
