@@ -1,4 +1,4 @@
-module vpu_top (
+module vpu_top #(
   parameter int DATA_W = 32,
   parameter int ADDR_W = 16,
   parameter int OP_W = 4,
@@ -9,18 +9,18 @@ module vpu_top (
   input logic rst,
 
   input logic [31:0] inst,
-  input logic mem_rdy, // memory rdy to accept addr
-  input logic mem_read_en, // memory ready to send data to vpu
-  input logic mem_write_en, // memory ready to accept data from vpu
+  input logic mem_rdy,
+  input logic mem_read_en,
+  input logic mem_write_en,
 
-  output logic [ADDR_W-1:0] addr_a, // instruction decode addr 
+  output logic [ADDR_W-1:0] addr_a,
   output logic [ADDR_W-1:0] addr_b,
   output logic [ADDR_W-1:0] addr_c,
 
   input logic [DATA_W-1:0] data_a,
   input logic [DATA_W-1:0] data_b,
   output logic [DATA_W-1:0] data_c,
-  output logic done // done signal to TPU control
+  output logic done
 );
 
 // instruction decode -------------------
@@ -28,6 +28,7 @@ logic [INST_ADDR-1:0] inst_addr_a, inst_addr_b, inst_addr_c, inst_addr_const;
 logic [OP_W-1:0] opcode;
 
 typedef struct packed {
+  logic [7:0] reserved;
   logic [INST_ADDR-1:0] const_addr; 
   logic [INST_ADDR-1:0] c_addr;
   logic [INST_ADDR-1:0] b_addr;
@@ -36,7 +37,7 @@ typedef struct packed {
 } inst_t;
 
 inst_t f;
-assign f = inst;  // Fixed struct assignment
+assign f = inst; 
 
 assign opcode = f.opcode;
 assign inst_addr_a = f.a_addr;
@@ -64,31 +65,54 @@ typedef enum logic [2:0] {
 
 state_t current_state, next_state;
 
+logic [DATA_W-1:0] a_val, b_val;
+logic [DATA_W-1:0] c_val;
+logic use_constant;
+logic data_a_valid, data_b_valid;
 
-logic [DATA_W-1:0] a_val, b_val, const_val;
+assign use_constant = (inst_addr_b == 0 && inst_addr_const != 0);
+
+logic data_a_captured, data_b_captured;
+
 always_ff @(posedge clk) begin
   if (rst) begin
     current_state <= IDLE;
     a_val <= '0;
     b_val <= '0;
-    const_val <= '0;
+    data_a_captured <= 1'b0;
+    data_b_captured <= 1'b0;
+    data_a_valid <= 1'b0;
+    data_b_valid <= 1'b0;
   end else begin
     current_state <= next_state;
+
+    if (mem_read_en) begin
+      if (current_state == DATA_A) begin
+        a_val <= data_a;
+        data_a_captured <= 1'b1;
+      end
+      if (current_state == DATA_B || current_state == DATA_CONST) begin
+        b_val <= data_b;
+        data_b_captured <= 1'b1;
+      end
+    end
     
-    // registering inputs between states
-    if (current_state == DATA_A && mem_read_en) begin
-      a_val <= data_a;
+    data_a_valid <= data_a_captured;
+    data_b_valid <= data_b_captured;
+    
+    if (current_state == IDLE) begin
+      data_a_captured <= 1'b0;
+      data_b_captured <= 1'b0;
+      data_a_valid <= 1'b0;
+      data_b_valid <= 1'b0;
+      c_val <= '0;
     end
-    if (current_state == DATA_B && mem_read_en) begin
-      b_val <= data_b;
-    end
-    if (current_state == DATA_CONST && mem_read_en) begin
-      const_val <= data_b;
+    if (current_state == PROCESSING) begin
+      c_val <= op_result;
     end
   end
 end
 
-// control signals
 logic vpu_op_start;
 logic [DATA_W-1:0] op_result;
 logic comp_done;
@@ -100,7 +124,7 @@ always_comb begin
   addr_a = '0;
   addr_b = '0;
   addr_c = '0;
-  data_c = '0;
+  data_c = c_val; 
   comp_done = 1'b0;
   
   case (current_state)
@@ -112,21 +136,27 @@ always_comb begin
     
     DATA_A: begin
       addr_a = addr_a_ext;
-      if (mem_rdy) begin
-        next_state = DATA_B;
+      if (data_a_valid) begin
+        if (opcode == 4'd2) begin 
+          next_state = PROCESSING;
+        end else if (use_constant) begin
+          next_state = DATA_CONST;
+        end else begin
+          next_state = DATA_B;
+        end
       end
     end
     
     DATA_B: begin
       addr_b = addr_b_ext;
-      if (mem_rdy) begin
-        next_state = DATA_CONST;
+      if (data_b_valid) begin
+        next_state = PROCESSING;
       end
     end
     
     DATA_CONST: begin
       addr_b = addr_const_ext;
-      if (mem_rdy) begin
+      if (data_b_valid) begin
         next_state = PROCESSING;
       end
     end
@@ -137,9 +167,8 @@ always_comb begin
     end
     
     DATA_C: begin
+      addr_c = addr_c_ext;
       if (mem_write_en) begin
-        addr_c = addr_c_ext;
-        data_c = op_result;
         comp_done = 1'b1;
         next_state = IDLE;
       end
@@ -162,7 +191,6 @@ vpu_op #(
   .result_out(op_result)
 );
 
-// done signal to TPU control
 assign done = comp_done;
 
 endmodule
