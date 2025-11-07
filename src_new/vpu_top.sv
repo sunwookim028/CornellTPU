@@ -19,7 +19,8 @@ module vpu_top (
 
   input logic [DATA_W-1:0] data_a,
   input logic [DATA_W-1:0] data_b,
-  output logic [DATA_W-1:0] data_c
+  output logic [DATA_W-1:0] data_c,
+  output logic done // done signal to TPU control
 );
 
 // instruction decode -------------------
@@ -81,7 +82,7 @@ always_ff @(posedge clk) begin
     if (current_state == DATA_B && mem_read_en) begin
       b_val <= data_b;
     end
-    if (current_state == DATA_CONST && mem_write_en) begin
+    if (current_state == DATA_CONST && mem_read_en) begin
       const_val <= data_b;
     end
   end
@@ -90,6 +91,7 @@ end
 // control signals
 logic vpu_op_start;
 logic [DATA_W-1:0] op_result;
+logic comp_done;
 
 always_comb begin
   next_state = current_state;
@@ -99,6 +101,7 @@ always_comb begin
   addr_b = '0;
   addr_c = '0;
   data_c = '0;
+  comp_done = 1'b0;
   
   case (current_state)
     IDLE: begin
@@ -109,21 +112,21 @@ always_comb begin
     
     DATA_A: begin
       addr_a = addr_a_ext;
-      if (mem_read_en) begin
+      if (mem_rdy) begin
         next_state = DATA_B;
       end
     end
     
     DATA_B: begin
       addr_b = addr_b_ext;
-      if (mem_read_en) begin
+      if (mem_rdy) begin
         next_state = DATA_CONST;
       end
     end
     
     DATA_CONST: begin
       addr_b = addr_const_ext;
-      if (mem_read_en) begin
+      if (mem_rdy) begin
         next_state = PROCESSING;
       end
     end
@@ -137,6 +140,7 @@ always_comb begin
       if (mem_write_en) begin
         addr_c = addr_c_ext;
         data_c = op_result;
+        comp_done = 1'b1;
         next_state = IDLE;
       end
     end
@@ -147,8 +151,6 @@ always_comb begin
   endcase
 end
 
-logic [DATA_W-1:0] op_1_result, op_2_result;
-
 vpu_op #(
   .DATA_W(DATA_W),
   .OP_W(OP_W)
@@ -157,21 +159,10 @@ vpu_op #(
   .operand0(a_val),
   .operand1(b_val),
   .opcode(opcode),
-  .result_out(op_1_result)
+  .result_out(op_result)
 );
 
-vpu_op #(
-  .DATA_W(DATA_W),
-  .OP_W(OP_W)
-) op_2 (
-  .start(vpu_op_start),
-  .operand0(a_val),
-  .operand1(const_val),
-  .opcode(opcode),
-  .result_out(op_2_result)
-);
-
-// result selection based on opcode
-assign op_result = (opcode == 4'd2) ? op_2_result : op_1_result;
+// done signal to TPU control
+assign done = comp_done;
 
 endmodule
