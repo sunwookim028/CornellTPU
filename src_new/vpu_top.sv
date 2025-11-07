@@ -10,7 +10,8 @@ module vpu_top (
 
   input logic [31:0] inst,
   input logic mem_rdy, // memory rdy to accept addr
-  input logic mem_valid, // memory has sent valid data
+  input logic mem_read_en, // memory ready to send data to vpu
+  input logic mem_write_en, // memory ready to accept data from vpu
 
   output logic [ADDR_W-1:0] addr_a, // instruction decode addr 
   output logic [ADDR_W-1:0] addr_b,
@@ -74,13 +75,13 @@ always_ff @(posedge clk) begin
     current_state <= next_state;
     
     // registering inputs between states
-    if (current_state == DATA_A && mem_valid) begin
+    if (current_state == DATA_A && mem_read_en) begin
       a_val <= data_a;
     end
-    if (current_state == DATA_B && mem_valid) begin
+    if (current_state == DATA_B && mem_read_en) begin
       b_val <= data_b;
     end
-    if (current_state == DATA_CONST && mem_valid) begin
+    if (current_state == DATA_CONST && mem_write_en) begin
       const_val <= data_b;
     end
   end
@@ -108,21 +109,21 @@ always_comb begin
     
     DATA_A: begin
       addr_a = addr_a_ext;
-      if (mem_valid) begin
+      if (mem_read_en) begin
         next_state = DATA_B;
       end
     end
     
     DATA_B: begin
       addr_b = addr_b_ext;
-      if (mem_valid) begin
+      if (mem_read_en) begin
         next_state = DATA_CONST;
       end
     end
     
     DATA_CONST: begin
       addr_b = addr_const_ext;
-      if (mem_valid) begin
+      if (mem_read_en) begin
         next_state = PROCESSING;
       end
     end
@@ -133,7 +134,7 @@ always_comb begin
     end
     
     DATA_C: begin
-      if (mem_rdy) begin
+      if (mem_write_en) begin
         addr_c = addr_c_ext;
         data_c = op_result;
         next_state = IDLE;
