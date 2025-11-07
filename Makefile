@@ -19,6 +19,8 @@ export PYTHONPATH := test:$(PYTHONPATH)
 SOURCES = src/pe.sv \
           src/systolic.sv \
 		  src/systolic_wrapper.sv \
+		  src/mock_memory.sv \
+		  src/top_systolic_test.sv \
           src/fixedpoint.sv
 
 # MODIFY 1) variable next to -s 
@@ -67,6 +69,12 @@ test_systolic_wrapper_adhoc: $(SIM_BUILD_DIR)
 test_systolic_wrapper_random: $(SIM_BUILD_DIR)
 	$(IVERILOG) -o $(SIM_VVP) -s systolic_wrapper -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper_random.sv
 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper_random $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
+
+test_systolic_wrapper_load: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s top_systolic_test -s dump -g2012 $(SOURCES) test/dump_systolic_wrapper_load.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_systolic_wrapper_load $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
 	! grep failure results.xml
 	mv dump_random_systolic.vcd waveforms/ 2>/dev/null || true
 
