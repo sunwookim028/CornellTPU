@@ -111,6 +111,8 @@ module systolic_wrapper #(
         S_LOAD_X_WAIT,
         S_RUN,
         S_CAPTURE,
+        S_STORE_REQ,
+        S_STORE_WAIT,
         S_DONE
     } state_t;
 
@@ -366,15 +368,58 @@ module systolic_wrapper #(
                     for (int i = 0; i < N; i++)
                         all_done &= (row_ptr[i] == N);
                     if (all_done)
-                        state <= S_DONE;
+                        state <= S_STORE_REQ;
+                end
+
+                S_STORE_REQ: begin
+                    mem_req_addr <= base_addr_out_reg + (load_idx * BYTES_PER_BEAT);
+
+                    // Put BANKING_FACTOR output elements into mem_req_data
+                    for (int b = 0; b < BANKING_FACTOR; b++) begin
+                        int flat_index;
+                        flat_index = load_idx * BANKING_FACTOR + b;
+                        if (flat_index < TOTAL_ELEMS)
+                            mem_req_data[b*DATA_WIDTH +: DATA_WIDTH] <= out_matrix[flat_index];
+                        else
+                            mem_req_data[b*DATA_WIDTH +: DATA_WIDTH] <= '0;
+                    end
+
+                    mem_write_en <= 1;
+
+                    // Reset memory latency timer - 0 cycles since memory request
+                    mem_latency_timer <= '0;
+                    state <= S_STORE_WAIT;
+                end
+
+                S_STORE_WAIT: begin
+                    if (mem_latency_timer >= (MEM_LATENCY - 1)) begin
+                        if ((load_idx + 1) * BANKING_FACTOR >= TOTAL_ELEMS) begin
+                            // Done writing all outputs
+                            state <= S_DONE;
+                        end else begin
+                            load_idx <= load_idx + 1;
+                            state <= S_STORE_REQ;
+                        end
+                    end else begin
+                        mem_latency_timer <= mem_latency_timer + 1;
+                    end
                 end
 
                 S_DONE: begin
                     done <= 1;
                     state <= S_IDLE;
                 end
+
             endcase
         end
     end
+
+    // Temporary: Break out the out matrix for waveform debugging
+    generate
+    for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
+        logic signed [DATA_WIDTH-1:0] out_elem;
+        assign out_elem = out_matrix[i];
+    end
+    endgenerate
 
 endmodule

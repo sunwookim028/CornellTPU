@@ -16,6 +16,8 @@ module mock_memory #(
     // Request
     input  logic mem_read_en,
     input  logic [ADDRESS_WIDTH-1:0] mem_req_addr,
+    input  logic mem_write_en,
+    input  logic [DATA_WIDTH*BANKING_FACTOR-1:0] mem_req_data,
 
     // Response
     output logic [BANKING_FACTOR*DATA_WIDTH-1:0] mem_resp_data
