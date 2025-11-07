@@ -81,11 +81,8 @@ generate
                     sum_mant = sum_mant >> 1;
                     larger_exp = larger_exp + 1;
                 end else if (sum_mant[23:0] != 0) begin
-                    for (int i = 22; i >= 0; i--) begin
-                        if (sum_mant[23]) break;
-                        sum_mant = sum_mant << 1;
-                        larger_exp = larger_exp - 1;
-                    end
+                    sum_mant = sum_mant << 1;
+                    larger_exp = larger_exp - 1;
                 end
                 
                 // overflow ? underflow ?

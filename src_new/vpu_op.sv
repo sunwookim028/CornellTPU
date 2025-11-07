@@ -22,8 +22,11 @@ logic [DATA_W-1:0] adder_result;
 logic [DATA_W-1:0] relu_result;
 
 // fp32 adder instance ; this can be adjusted for fxp
+logic [DATA_W-1:0] operand1_neg;
+assign operand1_neg = ~operand1 + 1'b1;
+
 assign adder_a = operand0;
-assign adder_b = (opcode == SUB) ? {~operand1[DATA_W-1], operand1[DATA_W-2:0]} : operand1;
+assign adder_b = (opcode == SUB) ? operand1_neg : operand1;
 parameterized_adder #(.FORMAT("FP32")) fp32_adder (
   .a(adder_a),
   .b(adder_b),
