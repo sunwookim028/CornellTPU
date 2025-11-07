@@ -35,8 +35,6 @@ module top_systolic_test;
     assign base_addr_x = BASE_ADDR_X;
     assign base_addr_out = BASE_ADDR_OUT;
 
-    logic signed [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
-
     // DUT
     systolic_wrapper #(
         .N(N),
@@ -57,9 +55,7 @@ module top_systolic_test;
         .mem_req_data(mem_req_data),
         .mem_resp_data(mem_resp_data),
         .mem_read_en(mem_read_en),
-        .mem_write_en(mem_write_en),
-
-        .out_matrix(out_matrix)
+        .mem_write_en(mem_write_en)
     );
 
     mock_memory #(

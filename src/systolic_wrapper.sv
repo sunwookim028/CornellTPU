@@ -24,11 +24,11 @@ module systolic_wrapper #(
     output logic [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_req_data,
     input  logic [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_resp_data,
     output logic mem_read_en,
-    output logic mem_write_en,
-
-    // Temporary (to be removed and replaced with storing back to memory):
-    output logic signed [DATA_WIDTH-1:0] out_matrix [N*N-1:0] // leave this as an output for now
+    output logic mem_write_en
 );
+
+    // Temporary (for debugging and facilitating Cocotb testbench):
+    logic signed [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
 
     // Helper function for indexing matrices with data stored in row-major order
     function automatic int idx(input int r, input int c);
