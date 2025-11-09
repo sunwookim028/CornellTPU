@@ -1,12 +1,8 @@
-
 `timescale 1 ns / 1 ps
 
-	module tpu_top #
+	module tpu_top_v4 #
 	(
 		// Users to add parameters here
-		
-		parameter integer DATA_WIDTH = 32,
-        parameter integer ADDR_WIDTH = 13,
 
 		// User parameters ends
 		// Do not modify the parameters beyond this line
@@ -14,22 +10,17 @@
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 5
+		parameter integer C_S00_AXI_ADDR_WIDTH	= 6,
+
+		// Parameters of Axi Slave Bus Interface S00_AXIS
+		parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+
+		// Parameters of Axi Master Bus Interface M00_AXIS
+		parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+		parameter integer C_M00_AXIS_START_COUNT	= 32
 	)
 	(
 		// Users to add ports here
-		
-		// AXI4-Stream Slave interface (input from DMA MM2S)
-        input  wire                   s_axis_valid,
-        input  wire [DATA_WIDTH-1:0]  s_axis_data,
-        input  wire                   s_axis_last,
-        output wire                   s_axis_ready,
-        
-        // AXI4-Stream Master interface (output to DMA S2MM)
-        output wire                    m_axis_valid,
-        output wire  [DATA_WIDTH-1:0]  m_axis_data,
-        output wire                    m_axis_last,
-        input  wire                   m_axis_ready,
 
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -56,10 +47,28 @@
 		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
 		output wire [1 : 0] s00_axi_rresp,
 		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready
+		input wire  s00_axi_rready,
+
+		// Ports of Axi Slave Bus Interface S00_AXIS
+		input wire  s00_axis_aclk,
+		input wire  s00_axis_aresetn,
+		output wire  s00_axis_tready,
+		input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+		input wire [(C_S00_AXIS_TDATA_WIDTH/8)-1 : 0] s00_axis_tstrb,
+		input wire  s00_axis_tlast,
+		input wire  s00_axis_tvalid,
+
+		// Ports of Axi Master Bus Interface M00_AXIS
+		input wire  m00_axis_aclk,
+		input wire  m00_axis_aresetn,
+		output wire  m00_axis_tvalid,
+		output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+		output wire [(C_M00_AXIS_TDATA_WIDTH/8)-1 : 0] m00_axis_tstrb,
+		output wire  m00_axis_tlast,
+		input wire  m00_axis_tready
 	);
 	
-	    // 32-bit buses from AXI slave
+	// 32-bit buses from AXI slave
     wire [31:0] slv_reg0_bus;
     wire [31:0] slv_reg3_bus;
     wire [31:0] slv_reg4_bus;
@@ -76,10 +85,10 @@
     wire [31:0] len       = slv_reg6_bus;
     
 // Instantiation of Axi Bus Interface S00_AXI
-	tpu_top_slave_lite_v1_0_S00_AXI # ( 
+	tpu_top_v4_slave_lite_v1_0_S00_AXI # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
 		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) tpu_top_slave_lite_v1_0_S00_AXI_inst (
+	) tpu_top_v4_slave_lite_v1_0_S00_AXI_inst (
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),
 		.S_AXI_AWADDR(s00_axi_awaddr),
@@ -112,38 +121,61 @@
         .slv_reg6_out(slv_reg6_bus)
 	);
 
+// Instantiation of Axi Bus Interface S00_AXIS
+	tpu_top_v4_slave_stream_v1_0_S00_AXIS # ( 
+		.C_S_AXIS_TDATA_WIDTH(C_S00_AXIS_TDATA_WIDTH)
+	) tpu_top_v4_slave_stream_v1_0_S00_AXIS_inst (
+		.S_AXIS_ACLK(s00_axis_aclk),
+		.S_AXIS_ARESETN(s00_axis_aresetn),
+		.S_AXIS_TREADY(s00_axis_tready),
+		.S_AXIS_TDATA(s00_axis_tdata),
+		.S_AXIS_TSTRB(s00_axis_tstrb),
+		.S_AXIS_TLAST(s00_axis_tlast),
+		.S_AXIS_TVALID(s00_axis_tvalid),
+		
+		.len(len),
+		.data_to_bram(dma_din),
+		.write_pointer(write_pointer),
+		.done(write_bram_done),
+		.write_en(write_en)
+	);
+
+// Instantiation of Axi Bus Interface M00_AXIS
+	tpu_top_v4_master_stream_v1_0_M00_AXIS # ( 
+		.C_M_AXIS_TDATA_WIDTH(C_M00_AXIS_TDATA_WIDTH),
+		.C_M_START_COUNT(C_M00_AXIS_START_COUNT)
+	) tpu_top_v4_master_stream_v1_0_M00_AXIS_inst (
+		.M_AXIS_ACLK(m00_axis_aclk),
+		.M_AXIS_ARESETN(m00_axis_aresetn),
+		.M_AXIS_TVALID(m00_axis_tvalid),
+		.M_AXIS_TDATA(m00_axis_tdata),
+		.M_AXIS_TSTRB(m00_axis_tstrb),
+		.M_AXIS_TLAST(m00_axis_tlast),
+		.M_AXIS_TREADY(m00_axis_tready),
+		
+		.data_to_ddr(dma_dout),
+		.len(len),
+		.read_en(read_en),
+		.done(read_bram_done),
+		.read_pointer(read_pointer)
+	);
+
 	// Add user logic here
 	
-    //=====================================================================
-    // User logic for TPU Top Controller (pure Verilog-2001 version)
-    //=====================================================================
-    
-    // --------------------------------------------------------------------
-    //  AXI-Lite register mapping
-    // --------------------------------------------------------------------
-    //  slv_reg0 : instr        (0=WRITE_BRAM, 1=READ_BRAM, 2=COMPUTE)
-    //  slv_reg1 : instr_ready  (1 = ready for new instruction, 0 = busy)
-    //  slv_reg2 : stream_ready (1 = BRAM ready for DMA bursts)
-    //  slv_reg3 : addr_a       (base address for BRAM access)
-    //  slv_reg4 : addr_b       (secondary vector base for compute)
-    //  slv_reg5 : addr_out     (destination base address for compute)
-    //  slv_reg6 : len          (number of words to process)
-    // --------------------------------------------------------------------
-    
-
-    
-    // --------------------------------------------------------------------
-    //  Internal control signals
-    // --------------------------------------------------------------------
-    reg start_write, start_read, start_compute;
-    wire bram_done, compute_done;
+	//DMA to bram wires
+	wire [12:0] dma_addr;
+	wire [31:0] dma_din, dma_dout;
+	
+	reg write_en, read_en, start_compute;
+    wire write_bram_done, read_bram_done, compute_done;
+    wire [15:0] write_pointer;
+    wire [15:0] read_pointer;
     
     // BRAM to compute interface wires (port b)
     wire [12:0] comp_addr_b;
     wire [31:0] comp_din_b, comp_dout_b;
     wire        comp_en_b, comp_we_b;
     
-
     //  FSM State encoding
     localparam IDLE         = 3'd0;
     localparam EXEC_WRITE   = 3'd1;
@@ -153,20 +185,19 @@
     
     reg [2:0] state = IDLE;
     
-    
     //  Sequential FSM logic
     always @(posedge s00_axi_aclk or negedge s00_axi_aresetn) begin
         if (!s00_axi_aresetn) begin
             state         <= IDLE;
             instr_ready   <= 1'b1;
             stream_ready  <= 1'b1;
-            start_write   <= 1'b0;
-            start_read    <= 1'b0;
+            write_en   <= 1'b0;
+            read_en    <= 1'b0;
             start_compute <= 1'b0;
         end else begin
             // defaults
-            start_write   <= 1'b0;
-            start_read    <= 1'b0;
+            write_en   <= 1'b0;
+            read_en    <= 1'b0;
             start_compute <= 1'b0;
     
             case (state)
@@ -175,12 +206,12 @@
                     instr_ready <= 1'b1; // ready for next instruction
                     if (instr == 2'd1) begin // WRITE_BRAM
                         instr_ready  <= 1'b0;
-                        start_write  <= 1'b1;
+                        write_en  <= 1'b1;
                         stream_ready <= 1'b1; // BRAM ready for DMA stream
                         state        <= EXEC_WRITE;
                     end else if (instr == 2'd2) begin // READ_BRAM
                         instr_ready  <= 1'b0;
-                        start_read   <= 1'b1;
+                        read_en   <= 1'b1;
                         stream_ready <= 1'b1;
                         state        <= EXEC_READ;
                     end else if (instr == 2'd3) begin // COMPUTE
@@ -195,14 +226,16 @@
                 EXEC_WRITE: begin
                     // Wait until BRAM transfer finishes
                     stream_ready <= 1'b1;
-                    if (bram_done)
+                    write_en <= 1'b1;
+                    if (write_bram_done)
                         state <= WAIT_DONE;
                 end
     
                 //------------------------------------------------------
                 EXEC_READ: begin
                     stream_ready <= 1'b1;
-                    if (bram_done)
+                    read_en <= 1'b1;
+                    if (read_bram_done)
                         state <= WAIT_DONE;
                 end
     
@@ -223,14 +256,6 @@
         end
     end
     
-  
-    //  Write back instr_ready / stream_ready flags to AXI registers 
-//    always @(*) begin
-//        tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg1 = {31'd0, instr_ready};
-//        tpu_top_slave_lite_v1_0_S00_AXI_inst.slv_reg2 = {31'd0, stream_ready};
-//    end
-    
-
     //  Instantiate submodules
     bram_top #(
         .ADDR_WIDTH(13),
@@ -238,21 +263,18 @@
     ) u_bram_top (
         .clk(s00_axi_aclk),
         .rst_n(s00_axi_aresetn),
-        .start_write(start_write),
-        .start_read(start_read),
         .base_addr(addr_a),
-        .len(len),
-        .done(bram_done),
     
         // DMA AXI-Stream interfaces 
-        .s_axis_valid(s_axis_valid),
-        .s_axis_data (s_axis_data),
-        .s_axis_last (s_axis_last),
-        .s_axis_ready(s_axis_ready),
-        .m_axis_valid(m_axis_valid),
-        .m_axis_data (m_axis_data),
-        .m_axis_last (m_axis_last),
-        .m_axis_ready(m_axis_ready),
+        
+        .dma_wr_en(write_en),
+        .dma_wr_data(dma_din),
+        .dma_write_pointer(write_pointer),
+        
+        .dma_rd_en(read_en),
+        .dma_rd_data(dma_dout),
+        .dma_read_pointer(read_pointer),
+        
     
         // Compute-side BRAM port
         .comp_addr_b(comp_addr_b),
@@ -286,3 +308,5 @@
     );
 
 	// User logic ends
+
+	endmodule

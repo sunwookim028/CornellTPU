@@ -49,7 +49,7 @@ def main():
 
     # Components
     dma = ol.axi_dma_0
-    ctrl = ol.tpu_top_0  # your AXI-lite control IP instance name
+    ctrl = ol.tpu_top_v4_0  # your AXI-lite control IP instance name
     mmio = ctrl.mmio
 
     # Buffers
@@ -84,9 +84,6 @@ def main():
     print(mmio.read(REG_ADDR["length"]))
     print(mmio.read(REG_ADDR["instr"]))
 
-    # wait until stream ready to accept DMA data
-    wait_for_flag(mmio, "stream_ready", 1)
-
     # Send A first
     in_buf[:] = a
     dma.sendchannel.transfer(in_buf)
@@ -95,7 +92,7 @@ def main():
     wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["instr"], 0) # sets it back to IDLE state
     print("\n ready for instruction")
-    mmio.write(REG_ADDR["addr_a"], base + length)   # BRAM base A
+    mmio.write(REG_ADDR["addr_a"], base + length)   # BRAM base B
     mmio.write(REG_ADDR["length"], length)
     mmio.write(REG_ADDR["instr"], WRITE_BRAM)
 
@@ -106,7 +103,6 @@ def main():
     # wait until stream ready to accept DMA data
     wait_for_flag(mmio, "stream_ready", 1)
 
-
     # Send B
     in_buf[:] = b
     print("\n=== DMA Status BEFORE B transfer ===")
@@ -116,9 +112,6 @@ def main():
     print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
 
     dma.sendchannel.transfer(in_buf)
-
-    # Optional short delay before waiting, helps see mid-transfer state
-    time.sleep(0.1)
 
     print("\n=== DMA Status BEFORE wait() for B ===")
     print("MM2S Status  (0x04):", hex(mmio.read(0x04)))
@@ -163,8 +156,6 @@ def main():
     print("instr_ready:", mmio.read(REG_ADDR["instr_ready"]))
     print("stream_ready:", mmio.read(REG_ADDR["stream_ready"]))
 
-    dma.recvchannel.stop()
-    dma.recvchannel.start()
 
     dma.recvchannel.transfer(out_buf)
 
