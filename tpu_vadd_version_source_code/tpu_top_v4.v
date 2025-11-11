@@ -227,22 +227,25 @@
                     // Wait until BRAM transfer finishes
                     stream_ready <= 1'b1;
                     write_en <= 1'b1;
-                    if (write_bram_done)
+                    if (write_bram_done) begin
                         state <= WAIT_DONE;
+                        end
                 end
     
                 //------------------------------------------------------
                 EXEC_READ: begin
                     stream_ready <= 1'b1;
                     read_en <= 1'b1;
-                    if (read_bram_done)
+                    if (read_bram_done) begin
                         state <= WAIT_DONE;
+                        end
                 end
     
                 //------------------------------------------------------
                 EXEC_COMPUTE: begin
-                    if (compute_done)
+                    if (compute_done) begin
                         state <= WAIT_DONE;
+                        end
                 end
     
                 //------------------------------------------------------

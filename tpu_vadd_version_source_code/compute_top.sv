@@ -45,11 +45,10 @@ module compute_top #(
     typedef enum logic [4:0] {
         IDLE,
         READ_A,
-        READ_A_W1,
-        READ_A_W2,
         READ_B,
-        READ_B_W1,
-        READ_B_W2,
+        WAIT_1,
+        WAIT_2,
+        WAIT_3,
         WRITE_OUT,
         DONE
     } state_t;
@@ -97,33 +96,30 @@ module compute_top #(
                     bram_en_b   <= 1'b1;
                     bram_we_b   <= 1'b0;
                     bram_addr_b <= addr_a + i;
-                    state       <= READ_A_W1;
+                    state       <= READ_B;
                 end
                 
-                READ_A_W1: begin 
-                    state <= READ_A_W2;
-                end
-                
-                READ_A_W2: begin
-                    data_a <= bram_dout_b;
-                    state <= READ_B;
-                end
 
                 // Read B[i] from BRAM
                 READ_B: begin
                     bram_en_b   <= 1'b1;
                     bram_we_b   <= 1'b0;
                     bram_addr_b <= addr_b + i;
-                    state       <= READ_B_W1;
+                    state       <= WAIT_1;
                 end
                 
-                READ_B_W1: begin
-                    state <= READ_B_W2;
+                WAIT_1: begin
+                    state <= WAIT_2;
                 end
                 
-                READ_B_W2: begin
-                    data_b <= bram_dout_b;
+                WAIT_2: begin
+                    state <= WAIT_3;
+                    data_a <= bram_dout_b;
+                end
+                
+                WAIT_3: begin
                     state <= WRITE_OUT;
+                    data_b <= bram_dout_b;
                 end
 
                 // Write SUM to C[i] in BRAM

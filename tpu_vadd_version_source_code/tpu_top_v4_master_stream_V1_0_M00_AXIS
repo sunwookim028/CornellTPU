@@ -100,7 +100,7 @@
 	assign M_AXIS_TDATA	= stream_data_out;
 	assign M_AXIS_TLAST	= axis_tlast_delay;
 	assign M_AXIS_TSTRB	= {(C_M_AXIS_TDATA_WIDTH/8){1'b1}};
-	assign done = tx_done; //I added this
+	assign done = done_aligned; 
 
 
 	// Control state machine implementation                             
@@ -117,7 +117,8 @@
 	    case (mst_exec_state)                                                 
 	      IDLE: 
 	      begin
-	        reset <= 1'b1;                                                         
+	        reset <= 1'b1;  
+	        count <= 1'b0;                                                       
 	        // The slave starts accepting tdata when                          
 	        // there tvalid is asserted to mark the                           
 	        // presence of valid streaming data                               
@@ -171,6 +172,8 @@
 	//tvalid generation
 	//axis_tvalid is asserted when the control state machine's state is SEND_STREAM and
 	//number of output streaming data is less than the NUMBER_OF_OUTPUT_WORDS.
+	
+	//keeps tvalid one cycle longer
 	assign axis_tvalid = ((mst_exec_state == SEND_STREAM) && (read_pointer < NUMBER_OF_OUTPUT_WORDS));
 	                                                                                               
 	// AXI tlast generation                                                                        
@@ -186,12 +189,12 @@
 	  if (!M_AXIS_ARESETN)                                                                         
 	    begin                                                                                      
 	      axis_tvalid_delay <= 1'b0;                                                               
-	      axis_tlast_delay <= 1'b0;                                                                
+	      axis_tlast_delay <= 1'b0;                                                       
 	    end                                                                                        
 	  else                                                                                         
 	    begin                                                                                      
-	      axis_tvalid_delay <= axis_tvalid;                                                        
-	      axis_tlast_delay <= axis_tlast;                                                          
+	      axis_tvalid_delay <= axis_tvalid_aligned;                                                        
+	      axis_tlast_delay <= axis_tlast_aligned;                                                     
 	    end                                                                                        
 	end                                                                                            
 
@@ -208,7 +211,7 @@
 	  else                                                                           
 	    if (read_pointer <= NUMBER_OF_OUTPUT_WORDS-1)                                
 	      begin                                                                      
-	        if (tx_en)                                                               
+	        if (previous_tx_en)                                                               
 	          // read pointer is incremented after every read from the FIFO          
 	          // when FIFO read signal is enabled.                                   
 	          begin                                                                  
@@ -225,16 +228,43 @@
 	end                                                                              
 
 
-	//FIFO read enable generation 
-
-	assign tx_en = M_AXIS_TREADY && axis_tvalid;   
+	//FIFO read enable generation
+	
+	//accounts for bram read latency of 2. essentially pipelining by 2 clock cycles.
+	reg valid_d1, valid_d2, valid_l1, valid_l2,  axis_tlast_aligned, axis_tvalid_aligned;
+	reg valid_done1, valid_done2, done_aligned; 
+    always @(posedge M_AXIS_ACLK) begin
+        if (!M_AXIS_ARESETN) begin
+            valid_d1 <= 0;   
+            valid_l1 <= 0;
+            valid_d2 <= 0;
+            valid_l2 <= 0;
+            axis_tlast_aligned <=0;
+            axis_tvalid_aligned <=0;
+            valid_done1 <= 0;
+            valid_done2 <= 0;
+        end else begin
+            valid_d1 <= axis_tvalid;
+            valid_d2 <= valid_d1;
+            axis_tvalid_aligned <= valid_d2;
+            valid_l1 <= axis_tlast;
+            valid_l2 <= valid_l1;
+            axis_tlast_aligned <= valid_l2;
+            valid_done1 <= tx_done;
+            valid_done2 <= valid_done1;
+            done_aligned <= valid_done2;
+        end
+    end
+     
+    assign previous_tx_en = M_AXIS_TREADY && axis_tvalid;
+    assign tx_en = M_AXIS_TREADY && axis_tvalid_aligned;  
 	                                                     
 	    // Streaming output data is read from FIFO       
 	    always @( posedge M_AXIS_ACLK )                  
 	    begin                                            
 	      if(!M_AXIS_ARESETN)                            
 	        begin                                        
-	          stream_data_out <= 1;                      
+	          stream_data_out <= 32'b0;                      
 	        end                                          
 	      else if (tx_en)// && M_AXIS_TSTRB[byte_index]  
 	        begin

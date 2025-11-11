@@ -126,11 +126,11 @@
 	// 
 	// The example design sink is always ready to accept the S_AXIS_TDATA  until
 	// the FIFO is not filled with NUMBER_OF_INPUT_WORDS number of input words.
-	assign axis_tready = ((mst_exec_state == WRITE_FIFO) && (write_pointer <= NUMBER_OF_INPUT_WORDS-1));
+	assign axis_tready = ((mst_exec_state == WRITE_FIFO) && (!writes_done));
 
 	always@(posedge S_AXIS_ACLK)
 	begin
-	  if(!S_AXIS_ARESETN)
+	  if(!S_AXIS_ARESETN || reset)
 	    begin
 	      write_pointer <= 0;
 	      writes_done <= 1'b0;
@@ -138,7 +138,7 @@
 	  else
 	    if (write_pointer <= NUMBER_OF_INPUT_WORDS-1)
 	      begin
-	        if (fifo_wren)
+	        if (fifo_wren && (write_pointer != NUMBER_OF_INPUT_WORDS-1))
 	          begin
 	            // write pointer is incremented after every write to the FIFO
 	            // when FIFO write signal is enabled.
@@ -171,13 +171,14 @@
 //	endgenerate
 
 	// Add user logic here
-	
+	reg [C_S_AXIS_TDATA_WIDTH-1 : 0] S_AXIS_TDATA_PIPELINED;
 	always @( posedge S_AXIS_ACLK )
 	    begin
 	      if (fifo_wren)// && S_AXIS_TSTRB[byte_index])
 	        begin
 //	          stream_data_fifo[write_pointer] <= S_AXIS_TDATA[(byte_index*8+7) -: 8];
-	          data <= S_AXIS_TDATA;
+              S_AXIS_TDATA_PIPELINED <= S_AXIS_TDATA;
+	          data <= S_AXIS_TDATA_PIPELINED;
 	        end  
 	    end  
 
