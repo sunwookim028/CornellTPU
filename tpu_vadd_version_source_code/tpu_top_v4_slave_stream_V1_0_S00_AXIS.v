@@ -76,6 +76,19 @@
 	// I/O Connections assignments
 	reg [31:0] data;
 	reg reset;
+	reg t_last_pipelined;
+	
+	always @(posedge S_AXIS_ACLK)                                                                  
+	begin                                                                                          
+	  if (!S_AXIS_ARESETN)                                                                         
+	    begin                                                                                      
+	      t_last_pipelined <= 1'b0;                                                       
+	    end                                                                                        
+	  else                                                                                         
+	    begin                                                                                      
+	      t_last_pipelined <= S_AXIS_TLAST;                                                     
+	    end                                                                                        
+	end  
 
 	assign S_AXIS_TREADY	= axis_tready;
 	assign data_to_bram = data;
@@ -145,7 +158,7 @@
 	            write_pointer <= write_pointer + 1;
 	            writes_done <= 1'b0;
 	          end
-	          if ((write_pointer == NUMBER_OF_INPUT_WORDS-1)|| S_AXIS_TLAST)
+	          if ((write_pointer == NUMBER_OF_INPUT_WORDS-1)|| t_last_pipelined)
 	            begin
 	              // reads_done is asserted when NUMBER_OF_INPUT_WORDS numbers of streaming data 
 	              // has been written to the FIFO which is also marked by S_AXIS_TLAST(kept for optional usage).
