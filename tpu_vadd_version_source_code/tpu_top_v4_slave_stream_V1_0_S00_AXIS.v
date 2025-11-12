@@ -77,16 +77,19 @@
 	reg [31:0] data;
 	reg reset;
 	reg t_last_pipelined;
+	reg fifo_wren_pipelined;
 	
 	always @(posedge S_AXIS_ACLK)                                                                  
 	begin                                                                                          
 	  if (!S_AXIS_ARESETN)                                                                         
 	    begin                                                                                      
-	      t_last_pipelined <= 1'b0;                                                       
+	      t_last_pipelined <= 1'b0;
+	      fifo_wren_pipelined <= 1'b0;                                                       
 	    end                                                                                        
 	  else                                                                                         
 	    begin                                                                                      
-	      t_last_pipelined <= S_AXIS_TLAST;                                                     
+	      t_last_pipelined <= S_AXIS_TLAST;
+	      fifo_wren_pipelined <= fifo_wren;                                                     
 	    end                                                                                        
 	end  
 
@@ -183,11 +186,12 @@
 //	  end		
 //	endgenerate
 
+
 	// Add user logic here
 	reg [C_S_AXIS_TDATA_WIDTH-1 : 0] S_AXIS_TDATA_PIPELINED;
 	always @( posedge S_AXIS_ACLK )
 	    begin
-	      if (fifo_wren)// && S_AXIS_TSTRB[byte_index])
+	      if (fifo_wren || fifo_wren_pipelined)// && S_AXIS_TSTRB[byte_index])
 	        begin
 //	          stream_data_fifo[write_pointer] <= S_AXIS_TDATA[(byte_index*8+7) -: 8];
               S_AXIS_TDATA_PIPELINED <= S_AXIS_TDATA;
