@@ -1,84 +1,119 @@
-module parameterized_multiplier #(
-    parameter FORMAT = "FP32"
+module fp32_mul#(
+  parameter FORMAT = "FP32",
+  parameter INT_BITS = 16,
+  parameter FRAC_BITS = 16,
+  parameter WIDTH = 32
 )(
-    input logic [31:0] a,
-    input logic [31:0] b, 
-    output logic [31:0] result
+  input [31:0] a, b,
+  output reg [31:0] result
 );
 
-generate
-    if (FORMAT == "FP32") begin : fp32_mode
-        logic a_sign, b_sign, result_sign;
-        logic [7:0] a_exp, b_exp, result_exp;
-        logic [23:0] a_mant, b_mant;
-        logic [47:0] product_mant;
-        logic [23:0] result_mant;
-        logic normalize_done;
-        integer i;
+reg [23:0] a_m, b_m, z_m;
+reg [9:0] a_e, b_e, z_e;
+reg a_s, b_s, z_s;
+reg [49:0] product;
+reg guard_bit, round_bit, sticky;
+
+always @(*) begin
+    a_m = {1'b0, a[22:0]};
+    b_m = {1'b0, b[22:0]};
+    a_e = a[30:23] - 127;
+    b_e = b[30:23] - 127;
+    a_s = a[31];
+    b_s = b[31];
+    
+    if ((a_e == 128 && a_m != 0) || (b_e == 128 && b_m != 0)) begin // NAN
+        result = {1'b1, 8'hFF, 1'b1, 22'h0};
+    end
+    else if (a_e == 128) begin // INF A
+        if (($signed(b_e) == -127) && (b_m == 0)) begin // NAN IF B = 0
+            result = {1'b1, 8'hFF, 1'b1, 22'h0};
+        end else begin
+            result = {a_s ^ b_s, 8'hFF, 23'h0};
+        end
+    end
+    else if (b_e == 128) begin // INF B
+        if (($signed(a_e) == -127) && (a_m == 0)) begin // NAN IF A = 0
+            result = {1'b1, 8'hFF, 1'b1, 22'h0};
+        end else begin
+            result = {a_s ^ b_s, 8'hFF, 23'h0};
+        end
+    end
+    else if (($signed(a_e) == -127) && (a_m == 0)) begin // 0 if A = 0
+        result = {a_s ^ b_s, 8'h0, 23'h0};
+    end
+    else if (($signed(b_e) == -127) && (b_m == 0)) begin // 0 if B = 0
+        result = {a_s ^ b_s, 8'h0, 23'h0};
+    end
+    else begin
+        if ($signed(a_e) == -127) begin 
+            a_e = -126;
+        end else begin
+            a_m[23] = 1'b1;
+        end
         
-        always_comb begin
-            a_sign = a[31];
-            b_sign = b[31];
-            a_exp = a[30:23];
-            b_exp = b[30:23];
-            a_mant = (a_exp == 0) ? {1'b0, a[22:0]} : {1'b1, a[22:0]};
-            b_mant = (b_exp == 0) ? {1'b0, b[22:0]} : {1'b1, b[22:0]};
-            
-            // Multiply mantissas
-            product_mant = a_mant * b_mant;
-            
-            // Add exponents and subtract bias (127)
-            result_exp = a_exp + b_exp - 8'd127;
-            result_sign = a_sign ^ b_sign;
-            
-            // Normalize - without break statement
-            result_mant = product_mant[46:23];
-            normalize_done = 1'b0;
-            
-            if (product_mant[47]) begin
-                // Overflow case - shift right
-                result_mant = product_mant >> 24;
-                result_exp = result_exp + 1;
-                normalize_done = 1'b1;
-            end else if (product_mant[46]) begin
-                // Already normalized
-                result_mant = product_mant[46:23];
-                normalize_done = 1'b1;
-            end
-            
-            if (!normalize_done) begin
-                // Find first 1 and shift left
-                for (i = 45; i >= 0; i = i - 1) begin
-                    if (product_mant[i] && !normalize_done) begin
-                        result_mant = product_mant << (46 - i);
-                        result_exp = result_exp - (46 - i);
-                        normalize_done = 1'b1;
-                    end
-                end
-            end
-            
-            // Handle special cases
-            if (a_exp == 8'hFF || b_exp == 8'hFF) begin
-                // Infinity or NaN
-                if ((a_exp == 8'hFF && a_mant[22:0] != 0) || 
-                    (b_exp == 8'hFF && b_mant[22:0] != 0)) begin
-                    result = 32'h7FC00000; // NaN
-                end else begin
-                    result = {result_sign, 8'hFF, 23'h0}; // Infinity
-                end
-            end else if (result_exp[7] && result_exp != 8'h00) begin
-                // Underflow
-                result = {result_sign, 8'h00, 23'h0};
-            end else if (result_exp >= 8'hFF) begin
-                // Overflow
-                result = {result_sign, 8'hFF, 23'h0};
-            end else begin
-                result = {result_sign, result_exp, result_mant[22:0]};
+        if ($signed(b_e) == -127) begin 
+            b_e = -126;
+        end else begin
+            b_m[23] = 1'b1;
+        end
+        
+        if (~a_m[23]) begin
+            a_m = a_m << 1;
+            a_e = a_e - 1;
+        end
+        if (~b_m[23]) begin 
+            b_m = b_m << 1;
+            b_e = b_e - 1;
+        end
+        
+        z_s = a_s ^ b_s;
+        z_e = a_e + b_e + 1;
+        product = a_m * b_m * 4;
+        
+        z_m = product[49:26];
+        guard_bit = product[25];
+        round_bit = product[24];
+        sticky = (product[23:0] != 0);
+        
+        // underflow
+        if ($signed(z_e) < -126) begin
+            z_e = z_e + (-126 - $signed(z_e));
+            z_m = z_m >> (-126 - $signed(z_e));
+            guard_bit = z_m[0];
+            round_bit = guard_bit;
+            sticky = sticky | round_bit;
+        end
+        else if (z_m[23] == 0) begin
+            z_e = z_e - 1;
+            z_m = z_m << 1;
+            z_m[0] = guard_bit;
+            guard_bit = round_bit;
+            round_bit = 1'b0;
+        end
+        // round
+        else if (guard_bit && (round_bit | sticky | z_m[0])) begin
+            z_m = z_m + 1;
+            if (z_m == 24'hffffff) begin
+                z_e = z_e + 1;
             end
         end
-    end else begin : fixed_point_mode
-        assign result = a * b;
+        
+        result[22:0] = z_m[22:0];
+        result[30:23] = z_e[7:0] + 127;
+        result[31] = z_s;
+        
+        if ($signed(z_e) == -126 && z_m[23] == 0) begin
+            result[30:23] = 8'h0;
+        end
+        
+        // overflow
+        if ($signed(z_e) > 127) begin 
+            result[22:0] = 23'h0;
+            result[30:23] = 8'hFF;
+            result[31] = z_s;
+        end
     end
-endgenerate
+end
 
 endmodule

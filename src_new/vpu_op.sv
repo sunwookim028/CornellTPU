@@ -38,7 +38,7 @@ parameterized_adder #(.FORMAT("FP32")) fp32_adder (
 
 assign mul_a = operand0;
 assign mul_b = operand1;
-parameterized_multiplier #(.FORMAT("FP32")) fp32_mul (
+fp32_mul fp32_mul (
   .a(mul_a),
   .b(mul_b),
   .result(mul_result)
