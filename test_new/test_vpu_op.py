@@ -1,14 +1,20 @@
 # test_vpu/test_vpu_op.py
 import os
 import subprocess
+import struct
+
+def float_to_int32(f):
+    """Convert float to 32-bit integer representation"""
+    return struct.unpack('I', struct.pack('f', f))[0]
 
 def test_vpu_op():
     """Test the VPU operation module with various ALU operations"""
     
     os.makedirs("build", exist_ok=True)
     
-    # Create testbench
+    # Create testbench with FP32 test cases
     testbench_code = """
+
 `timescale 1ns/1ps
 
 module test_vpu_op;
@@ -25,6 +31,7 @@ module test_vpu_op;
     // Test variables
     integer test_count;
     integer error_count;
+    real real_operand0, real_operand1, real_result, real_expected;
     
     // Instantiate DUT
     vpu_op #(
@@ -45,22 +52,83 @@ module test_vpu_op;
             4'd0: get_op_name = "ADD ";
             4'd1: get_op_name = "SUB ";
             4'd2: get_op_name = "RELU";
+            4'd3: get_op_name = "MUL ";
             default: get_op_name = "UNKN";
         endcase
     endfunction
     
-    // Test task for basic operations
+    // Function to convert FP32 to real
+    function real fp32_to_real;
+        input [31:0] fp32;
+        real result;
+        integer sign;
+        integer exponent;
+        integer mantissa;
+        real mantissa_val;
+        integer i;
+        begin
+            sign = fp32[31];
+            exponent = fp32[30:23];
+            mantissa = {1'b1, fp32[22:0]}; // Add implicit leading 1
+            
+            // Handle special cases
+            if (exponent == 8'hFF) begin
+                // Infinity or NaN
+                if (mantissa[22:0] == 0) begin
+                    result = sign ? -1.0e30 : 1.0e30; // Approximate infinity
+                end else begin
+                    result = 0.0; // NaN - treat as zero for testing
+                end
+            end else if (exponent == 8'h00) begin
+                // Denormalized numbers or zero
+                if (mantissa[22:0] == 0) begin
+                    result = 0.0;
+                end else begin
+                    // Denormalized number - no implicit leading 1
+                    mantissa_val = 0.0;
+                    for (i = 0; i < 23; i = i + 1) begin
+                        if (fp32[22-i]) begin
+                            mantissa_val = mantissa_val + (2.0 ** (-i-1));
+                        end
+                    end
+                    result = mantissa_val * (2.0 ** -126);
+                    if (sign) result = -result;
+                end
+            end else begin
+                // Normalized number
+                mantissa_val = 1.0; // Start with implicit leading 1
+                for (i = 0; i < 23; i = i + 1) begin
+                    if (fp32[22-i]) begin
+                        mantissa_val = mantissa_val + (2.0 ** (-i-1));
+                    end
+                end
+                result = mantissa_val * (2.0 ** (exponent - 127));
+                if (sign) result = -result;
+            end
+            
+            fp32_to_real = result;
+        end
+    endfunction
+    
+    // Test task for basic operations with tolerance for FP32
     task test_operation;
         input [DATA_W-1:0] op0;
         input [DATA_W-1:0] op1;
         input [OP_W-1:0] op;
         input [DATA_W-1:0] expected;
         input string test_name;
+        real tolerance;
+        real result_real, expected_real;
         begin
             $display("=== Test %0d: %s ===", test_count, test_name);
             $display("Operation: %s", get_op_name(op));
-            $display("Operand0: 0x%08x (%0d)", op0, $signed(op0));
-            $display("Operand1: 0x%08x (%0d)", op1, $signed(op1));
+            
+            real_operand0 = fp32_to_real(op0);
+            real_operand1 = fp32_to_real(op1);
+            real_expected = fp32_to_real(expected);
+            
+            $display("Operand0: 0x%08x (%0.6f)", op0, real_operand0);
+            $display("Operand1: 0x%08x (%0.6f)", op1, real_operand1);
             
             // Apply inputs
             start = 1'b1;
@@ -68,12 +136,16 @@ module test_vpu_op;
             operand1 = op1;
             opcode = op;
             
-            #10; // Wait for propagation
+            #100; // Wait longer for FP32 operations
             
-            $display("Result:   0x%08x (%0d)", result_out, $signed(result_out));
-            $display("Expected: 0x%08x (%0d)", expected, $signed(expected));
+            result_real = fp32_to_real(result_out);
+            $display("Result:   0x%08x (%0.6f)", result_out, result_real);
+            $display("Expected: 0x%08x (%0.6f)", expected, real_expected);
             
-            if (result_out === expected) begin
+            // Use tolerance for FP32 comparisons
+            tolerance = 0.0001;
+            if ((result_real >= real_expected - tolerance) && 
+                (result_real <= real_expected + tolerance)) begin
                 $display("PASS");
             end else begin
                 $display("FAIL");
@@ -94,10 +166,15 @@ module test_vpu_op;
         input [DATA_W-1:0] input_val;
         input [DATA_W-1:0] expected;
         input string test_name;
+        real input_real, expected_real;
         begin
             $display("=== Test %0d: %s ===", test_count, test_name);
             $display("Operation: RELU");
-            $display("Input:  0x%08x (%0d)", input_val, $signed(input_val));
+            
+            input_real = fp32_to_real(input_val);
+            expected_real = fp32_to_real(expected);
+            
+            $display("Input:  0x%08x (%0.6f)", input_val, input_real);
             
             // Apply inputs (operand1 is don't care for RELU)
             start = 1'b1;
@@ -105,10 +182,10 @@ module test_vpu_op;
             operand1 = 32'h0;
             opcode = 4'd2; // RELU opcode
             
-            #10; // Wait for propagation
+            #100; // Wait for propagation
             
-            $display("Result:   0x%08x (%0d)", result_out, $signed(result_out));
-            $display("Expected: 0x%08x (%0d)", expected, $signed(expected));
+            $display("Result:   0x%08x (%0.6f)", result_out, fp32_to_real(result_out));
+            $display("Expected: 0x%08x (%0.6f)", expected, expected_real);
             
             if (result_out === expected) begin
                 $display("PASS");
@@ -133,8 +210,8 @@ module test_vpu_op;
             
             // Test with start = 0
             start = 1'b0;
-            operand0 = 32'h0000000A;
-            operand1 = 32'h00000014;
+            operand0 = 32'h41200000; // 10.0 in FP32
+            operand1 = 32'h41a00000; // 20.0 in FP32
             opcode = 4'd0; // ADD
             
             #10;
@@ -149,10 +226,10 @@ module test_vpu_op;
             
             // Test with start = 1
             start = 1'b1;
-            #10;
-            $display("Start=1: Result=0x%08x", result_out);
+            #100;
+            $display("Start=1: Result=0x%08x (%0.6f)", result_out, fp32_to_real(result_out));
             
-            if (result_out === 32'h0000001E) begin
+            if (fp32_to_real(result_out) >= 29.999 && fp32_to_real(result_out) <= 30.001) begin
                 $display("PASS: Correct operation when start=1");
             end else begin
                 $display("FAIL: Incorrect operation when start=1");
@@ -174,8 +251,8 @@ module test_vpu_op;
             $display("=== Test %0d: Invalid Opcode ===", test_count);
             
             start = 1'b1;
-            operand0 = 32'h0000000A;
-            operand1 = 32'h00000014;
+            operand0 = 32'h41200000; // 10.0
+            operand1 = 32'h41a00000; // 20.0
             opcode = 4'd15; // Invalid opcode
             
             #10;
@@ -206,28 +283,43 @@ module test_vpu_op;
         test_count = 1;
         error_count = 0;
         
-        $display("Starting VPU Operation Tests");
-        $display("============================");
+        $display("Starting VPU Operation Tests (FP32)");
+        $display("===================================");
         $display("");
         
+        // FP32 test values
+        // 10.0 = 0x41200000, 20.0 = 0x41a00000, 30.0 = 0x41f00000
+        // 5.0 = 0x40a00000, 3.0 = 0x40400000, 8.0 = 0x41000000
+        // -10.0 = 0xc1200000, 0.0 = 0x00000000
+        // 4.0 = 0x40800000, 100.0 = 0x42c80000
+        // 1.0 = 0x3f800000
+        
         // Test ADD operations
-        test_operation(32'h0000000A, 32'h00000014, 4'd0, 32'h0000001E, "ADD: 10 + 20 = 30");
-        test_operation(32'h00000005, 32'h00000003, 4'd0, 32'h00000008, "ADD: 5 + 3 = 8");
-        test_operation(32'hFFFFFFF6, 32'h0000000A, 4'd0, 32'h00000000, "ADD: -10 + 10 = 0");
-        test_operation(32'hFFFFFFF6, 32'hFFFFFFF6, 4'd0, 32'hFFFFFFEC, "ADD: -10 + -10 = -20");
+        test_operation(32'h41200000, 32'h41a00000, 4'd0, 32'h41f00000, "ADD: 10.0 + 20.0 = 30.0");
+        test_operation(32'h40a00000, 32'h40400000, 4'd0, 32'h41000000, "ADD: 5.0 + 3.0 = 8.0");
+        test_operation(32'hc1200000, 32'h41200000, 4'd0, 32'h00000000, "ADD: -10.0 + 10.0 = 0.0");
+        test_operation(32'hc1200000, 32'hc1200000, 4'd0, 32'hc1a00000, "ADD: -10.0 + -10.0 = -20.0");
         
         // Test SUB operations  
-        test_operation(32'h00000014, 32'h0000000A, 4'd1, 32'h0000000A, "SUB: 20 - 10 = 10");
-        test_operation(32'h0000000A, 32'h00000014, 4'd1, 32'hFFFFFFF6, "SUB: 10 - 20 = -10");
-        test_operation(32'h00000000, 32'h0000000A, 4'd1, 32'hFFFFFFF6, "SUB: 0 - 10 = -10");
-        test_operation(32'hFFFFFFF6, 32'hFFFFFFF6, 4'd1, 32'h00000000, "SUB: -10 - (-10) = 0");
+        test_operation(32'h41a00000, 32'h41200000, 4'd1, 32'h41200000, "SUB: 20.0 - 10.0 = 10.0");
+        test_operation(32'h41200000, 32'h41a00000, 4'd1, 32'hc1200000, "SUB: 10.0 - 20.0 = -10.0");
+        test_operation(32'h00000000, 32'h41200000, 4'd1, 32'hc1200000, "SUB: 0.0 - 10.0 = -10.0");
+        test_operation(32'hc1200000, 32'hc1200000, 4'd1, 32'h00000000, "SUB: -10.0 - (-10.0) = 0.0");
+        
+        // Test MUL operations
+        test_operation(32'h40a00000, 32'h40800000, 4'd3, 32'h41a00000, "MUL: 5.0 * 4.0 = 20.0");
+        test_operation(32'h41200000, 32'h41200000, 4'd3, 32'h42c80000, "MUL: 10.0 * 10.0 = 100.0");
+        test_operation(32'hc1200000, 32'h41200000, 4'd3, 32'hc2c80000, "MUL: -10.0 * 10.0 = -100.0");
+        test_operation(32'hc1200000, 32'hc1200000, 4'd3, 32'h42c80000, "MUL: -10.0 * -10.0 = 100.0");
+        test_operation(32'h00000000, 32'h41200000, 4'd3, 32'h00000000, "MUL: 0.0 * 10.0 = 0.0");
+        test_operation(32'h3f800000, 32'h3f800000, 4'd3, 32'h3f800000, "MUL: 1.0 * 1.0 = 1.0");
         
         // Test ReLU operations
-        test_relu(32'h0000000A, 32'h0000000A, "RELU: Positive input (10)");
+        test_relu(32'h41200000, 32'h41200000, "RELU: Positive input (10.0)");
         test_relu(32'h00000000, 32'h00000000, "RELU: Zero input");
-        test_relu(32'hFFFFFFF6, 32'h00000000, "RELU: Negative input (-10)");
-        test_relu(32'h7FFFFFFF, 32'h7FFFFFFF, "RELU: Large positive input");
-        test_relu(32'h80000000, 32'h00000000, "RELU: Large negative input");
+        test_relu(32'hc1200000, 32'h00000000, "RELU: Negative input (-10.0)");
+        test_relu(32'h7f7fffff, 32'h7f7fffff, "RELU: Large positive input (MAX_FLOAT)");
+        test_relu(32'hff7fffff, 32'h00000000, "RELU: Large negative input (MIN_FLOAT)");
         
         // Test control signals
         test_start_control();
@@ -252,14 +344,15 @@ module test_vpu_op;
     // Monitor for debugging
     always @(*) begin
         if (start) begin
-            $display("[%0t] OP: %s, A=0x%08x, B=0x%08x, Result=0x%08x", 
-                     $time, get_op_name(opcode), operand0, operand1, result_out);
+            $display("[%0t] OP: %s, A=0x%08x(%0.3f), B=0x%08x(%0.3f), Result=0x%08x(%0.3f)", 
+                     $time, get_op_name(opcode), operand0, fp32_to_real(operand0), 
+                     operand1, fp32_to_real(operand1), result_out, fp32_to_real(result_out));
         end
     end
     
     // Timeout
     initial begin
-        #100000;
+        #1000000;
         $display("ERROR: Simulation timeout");
         $finish;
     end
@@ -273,53 +366,29 @@ endmodule
     
     print("Testbench written to build/test_vpu_op.sv")
     
-    # Create a simple parameterized_adder module for simulation (since your vpu_op uses it)
-    parameterized_adder_code = """
-module parameterized_adder #(
-    parameter FORMAT = "FP32"
-)(
-    input logic [31:0] a,
-    input logic [31:0] b, 
-    output logic [31:0] result
-);
-
-// Simple integer adder for simulation
-// In real implementation, this would be FP32 adder
-assign result = $signed(a) + $signed(b);
-
-endmodule
-"""
-    
-    with open("build/parameterized_adder.sv", "w") as f:
-        f.write(parameterized_adder_code)
-    
-    # Use the actual vpu_op.sv file from your source directory
-    # Assuming your vpu_op.sv is in the current directory or a src directory
+    # Use the actual source files
     source_files = []
     
-    # Look for vpu_op.sv in common locations
+    # Look for source files in common locations
     possible_paths = [
         "src_new/vpu_op.sv",
-        "src_new/fp_adder.sv"
+        "src_new/fp_adder.sv", 
+        "src_new/fp_mul.sv",
     ]
     
-    vpu_op_found = False
+    found_files = []
     for path in possible_paths:
         if os.path.exists(path):
             source_files.append(path)
-            vpu_op_found = True
-            print(f"Found vpu_op.sv at: {path}")
-            break
+            found_files.append(path)
+            print(f"Found source file: {path}")
     
-    if not vpu_op_found:
-        print("ERROR: Could not find vpu_op.sv file")
-        print("Please ensure vpu_op.sv is in one of these locations:")
+    if not found_files:
+        print("ERROR: Could not find any source files")
+        print("Please ensure the following files exist:")
         for path in possible_paths:
             print(f"  - {path}")
         return False
-    
-    # Add the parameterized_adder to the source files
-    source_files.append("build/parameterized_adder.sv")
     
     # Compile and run
     print("Compiling...")
