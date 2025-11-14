@@ -21,8 +21,8 @@ module systolic_wrapper #(
 
     // To/from memory:
     output logic [ADDRESS_WIDTH-1:0] mem_req_addr,
-    output logic [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_req_data,
-    input  logic [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_resp_data,
+    output logic signed [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_req_data,
+    input  logic signed [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_resp_data,
     output logic mem_read_en,
     output logic mem_write_en
 );
@@ -244,7 +244,7 @@ module systolic_wrapper #(
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
                             if (flat_index < TOTAL_ELEMS) begin
-                                weight_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
+                                weight_matrix[flat_index] <= $signed(mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH]);
                             end
                         end
                         // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.
@@ -283,7 +283,7 @@ module systolic_wrapper #(
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
                             if (flat_index < TOTAL_ELEMS) begin
-                                x_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
+                                x_matrix[flat_index] <= $signed(mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH]);
                             end
                         end
                         // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.

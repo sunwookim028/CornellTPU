@@ -8,8 +8,6 @@ def to_fixed(val, frac_bits=8):
     return scaled & 0xFFFF
 
 def from_fixed(val, frac_bits=8):
-    if val & 0x8000:  # if sign bit is set
-        val = val - 0x10000
     return float(val) / (1 << frac_bits)
 
 
@@ -27,8 +25,8 @@ async def test_systolic_wrapper_fixedpoint(dut):
     await RisingEdge(dut.clk)
 
     # Initialize inputs
-    weight_vals = [np.random.randint(0,6) for i in range(N*N)]
-    x_vals      = [np.random.randint(0,6) for i in range(N*N)]
+    weight_vals = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
+    x_vals      = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
 
     weight_fixed = [to_fixed(v) for v in weight_vals]
     x_fixed      = [to_fixed(v) for v in x_vals]
