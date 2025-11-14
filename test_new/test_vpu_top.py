@@ -208,11 +208,11 @@ module test_vpu_top;
         end
         
         // Load test data
-        test_memory[1] = 32'h0000000A;  // 10
-        test_memory[2] = 32'h00000014;  // 20  
-        test_memory[3] = 32'h00000005;  // 5
-        test_memory[4] = 32'hFFFFFFF6;  // -10
-        test_memory[5] = 32'h00000003;  // constant 3
+        test_memory[1] = 32'h41200000;  // 10.0 in float32
+        test_memory[2] = 32'h41a00000;  // 20.0 in float32  
+        test_memory[3] = 32'h40a00000;  // 5.0 in float32
+        test_memory[4] = 32'hc1200000;  // -10.0 in float32
+        test_memory[5] = 32'h40400000;  // constant 3.0 in float32
         
         $display("Starting VPU Tests with Memory Interface");
         $display("========================================");
@@ -227,7 +227,7 @@ module test_vpu_top;
         // Test 1: ADD 10 + 20 = 30
         test_instruction(
             create_instruction(1, 2, 10, 5, 4'd0),  // ADD with constant
-            32'h0000001E,  // 30
+            32'h41f00000,  // 30
             "ADD: 10 + 20 = 30",
             10
         );
@@ -235,7 +235,7 @@ module test_vpu_top;
         // Test 2: SUB 20 - 10 = 10  
         test_instruction(
             create_instruction(2, 1, 11, 5, 4'd1),  // SUB with constant
-            32'h0000000A,  // 10
+            32'h41200000,  // 10
             "SUB: 20 - 10 = 10",
             11
         );
@@ -243,7 +243,7 @@ module test_vpu_top;
         // Test 3: ADD 10 + 5 = 15
         test_instruction(
             create_instruction(1, 3, 12, 5, 4'd0),  // ADD with constant
-            32'h0000000F,  // 15
+            32'h41700000,  // 15
             "ADD: 10 + 5 = 15", 
             12
         );
@@ -251,7 +251,7 @@ module test_vpu_top;
         // Test 4: RELU(10) = 10
         test_instruction(
             create_instruction(1, 0, 13, 5, 4'd2),  // RELU with constant
-            32'h0000000A,  // 10
+            32'h41200000,  // 10
             "RELU: RELU(10) = 10",
             13
         );
@@ -360,25 +360,31 @@ endmodule
     
     # If parameterized_adder not found, create a simple one for simulation
     if not adder_found:
-        print("Creating simple parameterized_adder for simulation...")
-        parameterized_adder_code = """
-module parameterized_adder #(
-    parameter FORMAT = "FP32"
-)(
-    input logic [31:0] a,
-    input logic [31:0] b, 
-    output logic [31:0] result
-);
-
-// Simple integer adder for simulation
-// In real implementation, this would be FP32 adder
-assign result = $signed(a) + $signed(b);
-
-endmodule
-"""
-        with open("build/parameterized_adder.sv", "w") as f:
-            f.write(parameterized_adder_code)
-        source_files.append("build/parameterized_adder.sv")
+        print("ERROR: Could not find vpu_op.sv file")
+        print("Please ensure vpu_op.sv is in one of these locations:")
+        for path in vpu_op_paths:
+            print(f"  - {path}")
+        return False
+    
+    mul_paths = [
+        "src_new/fp_mul.sv", 
+    ]
+    
+    mul_found = False
+    for path in mul_paths:
+        if os.path.exists(path):
+            source_files.append(path)
+            mul_found = True
+            print(f"Found parameterized_mul.sv at: {path}")
+            break
+    
+    # If parameterized_adder not found, create a simple one for simulation
+    if not mul_found:
+        print("ERROR: Could not find vpu_op.sv file")
+        print("Please ensure vpu_op.sv is in one of these locations:")
+        for path in vpu_op_paths:
+            print(f"  - {path}")
+        return False
     
     # Compile and run
     print("Compiling...")

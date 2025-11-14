@@ -1,6 +1,6 @@
 module vpu_top #(
   parameter int DATA_W = 32,
-  parameter int ADDR_W = 16,
+  parameter int ADDR_W = 13,
   parameter int OP_W = 4,
   parameter int INST_ADDR = 5,
   parameter int M = 4
@@ -81,12 +81,15 @@ always_ff @(posedge clk) begin
     b_val <= '0;
     data_a_captured <= 1'b0;
     data_b_captured <= 1'b0;
-    data_a_valid <= 1'b0;
-    data_b_valid <= 1'b0;
   end else begin
     current_state <= next_state;
-
-    if (mem_read_en) begin
+    
+    if (current_state == IDLE && next_state == DATA_A) begin
+      data_a_captured <= 1'b0;
+      data_b_captured <= 1'b0;
+    end
+    
+    if (mem_rdy) begin
       if (current_state == DATA_A) begin
         a_val <= data_a;
         data_a_captured <= 1'b1;
@@ -97,16 +100,6 @@ always_ff @(posedge clk) begin
       end
     end
     
-    data_a_valid <= data_a_captured;
-    data_b_valid <= data_b_captured;
-    
-    if (current_state == IDLE) begin
-      data_a_captured <= 1'b0;
-      data_b_captured <= 1'b0;
-      data_a_valid <= 1'b0;
-      data_b_valid <= 1'b0;
-      c_val <= '0;
-    end
     if (current_state == PROCESSING) begin
       c_val <= op_result;
     end
@@ -136,7 +129,9 @@ always_comb begin
     
     DATA_A: begin
       addr_a = addr_a_ext;
-      if (data_a_valid) begin
+      if (mem_rdy && !data_a_captured) begin
+        next_state = DATA_A;
+      end else if (data_a_captured) begin
         if (opcode == 4'd2) begin 
           next_state = PROCESSING;
         end else if (use_constant) begin
@@ -147,16 +142,11 @@ always_comb begin
       end
     end
     
-    DATA_B: begin
-      addr_b = addr_b_ext;
-      if (data_b_valid) begin
-        next_state = PROCESSING;
-      end
-    end
-    
-    DATA_CONST: begin
-      addr_b = addr_const_ext;
-      if (data_b_valid) begin
+    DATA_B, DATA_CONST: begin
+      addr_b = (current_state == DATA_CONST) ? addr_const_ext : addr_b_ext;
+      if (mem_rdy && !data_b_captured) begin
+        next_state = current_state;
+      end else if (data_b_captured) begin
         next_state = PROCESSING;
       end
     end
@@ -168,7 +158,7 @@ always_comb begin
     
     DATA_C: begin
       addr_c = addr_c_ext;
-      if (mem_write_en) begin
+      if (mem_write_en && mem_rdy) begin
         comp_done = 1'b1;
         next_state = IDLE;
       end

@@ -6,7 +6,6 @@ pymtl_tests
 sim_build/
 build/
 results.xml
-src/
 src_4x4/
 test/
 test_4x4/

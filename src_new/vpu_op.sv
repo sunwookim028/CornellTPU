@@ -15,12 +15,14 @@ localparam ADD = 4'd0;
 localparam SUB = 4'd1;
 localparam RELU = 4'd2;
 localparam MUL = 4'd3;
+localparam D_RELU = 4'd4; // relu deriv for backward pass
 
 // internal signalas for computation result storing
 logic [DATA_W-1:0] result;
 logic [DATA_W-1:0] adder_a, adder_b;
 logic [DATA_W-1:0] adder_result;
 logic [DATA_W-1:0] relu_result;
+logic [DATA_W-1:0] d_relu_result;
 logic [DATA_W-1:0] mul_a, mul_b;
 logic [DATA_W-1:0] mul_result;
 
@@ -38,7 +40,8 @@ parameterized_adder #(.FORMAT("FP32")) fp32_adder (
 
 assign mul_a = operand0;
 assign mul_b = operand1;
-fp32_mul fp32_mul (
+
+parameterized_mul #(.FORMAT("FP32")) fp32_mul (
   .a(mul_a),
   .b(mul_b),
   .result(mul_result)
@@ -47,9 +50,16 @@ fp32_mul fp32_mul (
 // ReLU operation 
 always_comb begin
   relu_result = {DATA_W{1'b0}};
-  
   if (!operand0[DATA_W-1]) begin
     relu_result = operand0;
+  end
+end
+
+// ReLU deriv
+always_comb begin
+  d_relu_result = 1;
+  if (!operand0[DATA_W-1]) begin
+    d_relu_result = '0;
   end
 end
 
@@ -68,6 +78,9 @@ always_comb begin
       end
       MUL: begin
         result = mul_result;
+      end
+      D_RELU: begin
+        result = d_relu_result;
       end
       default: begin
         result = {DATA_W{1'b0}};
