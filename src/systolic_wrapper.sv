@@ -244,7 +244,7 @@ module systolic_wrapper #(
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
                             if (flat_index < TOTAL_ELEMS) begin
-                                weight_matrix[flat_index] <= $signed(mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH]);
+                                weight_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
                             end
                         end
                         // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.
@@ -283,7 +283,7 @@ module systolic_wrapper #(
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
                             if (flat_index < TOTAL_ELEMS) begin
-                                x_matrix[flat_index] <= $signed(mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH]);
+                                x_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
                             end
                         end
                         // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.
@@ -310,7 +310,7 @@ module systolic_wrapper #(
                     // Increment phase counter
                     phase_counter <= phase_counter + 1;
 
-                    // ---- Weight pipeline: column-major, reversed along rows ----
+                    // Weight pipeline: column-major, reversed along rows
                     // Column 0
                     if (phase_counter < N) begin
                         sys_weight_in_11 <= weight_matrix[idx(0, N-1-phase_counter)];
@@ -335,13 +335,13 @@ module systolic_wrapper #(
                         sys_accept_w_4   <= 1;
                     end else sys_accept_w_4 <= 0;
 
-                    // ---- Switch X input when last weight of column 1 is loaded ----
+                    // Switch X input when last weight of column 1 is loaded
                     if (phase_counter == N-1)
                         sys_switch_in <= 1;
                     else
                         sys_switch_in <= 0;
 
-                    // ---- X input stream: staggered along rows ----
+                    // X input stream: staggered along rows
                     for (int row = 0; row < N; row++) begin
                         int ph;
                         ph = phase_counter - (N + row); // row-dependent delay
@@ -414,12 +414,13 @@ module systolic_wrapper #(
         end
     end
 
-    // Temporary: Break out the out matrix for waveform debugging
-    generate
-    for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
-        logic signed [DATA_WIDTH-1:0] out_elem;
-        assign out_elem = out_matrix[i];
-    end
-    endgenerate
+    // DEBUGGING: uncomment if needed
+    // Break out the out matrix for waveform debugging
+    //generate
+    //for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
+    //    logic signed [DATA_WIDTH-1:0] out_elem;
+    //    assign out_elem = out_matrix[i];
+    //end
+    //endgenerate
 
 endmodule

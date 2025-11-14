@@ -1,3 +1,6 @@
+# test_systolic_wrapper_suite.py
+# Run testing suite with cases defined in systolic_test_suite.py
+
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
 import numpy as np
