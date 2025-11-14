@@ -1,155 +1,100 @@
-// Top-level VPU module connecting vpu_ctrl and vpu_dpath
+//------------------------------------------------------------------------------
+// VPU Top: integrates control + datapath
+// Exposes a clean memory-side interface + done pulse
+//------------------------------------------------------------------------------
 `timescale 1ns/1ps
 `default_nettype none
 
 module vpu #(
-  parameter int DATA_W = 16,
-  parameter int ADDR_W = 10,
-  parameter int B = 8,        // batch size (K in spec)
-  parameter int D_OUT = 4     // output features (M in spec)
+  parameter int DATA_W        = 32,
+  parameter int ADDR_W        = 16,
+  parameter int OP_W          = 4,
+  parameter int INST_ADDR     = 5,
+  // datapath options
+  parameter bit HAS_FP_ADDER  = 0    // use integer/FXP add/sub in datapath
 )(
-  input logic clk,
-  input logic rst,
+  input  logic                 clk,
+  input  logic                 rst,
 
-  // Unified Buffer (UB) Interface
-  input logic ub_req_rdy,           // UB ready to accept request for data
-  output logic ub_req_val,          // VPU sending valid addr request
-  
-  // Address outputs to UB
-  output logic [ADDR_W-1:0] addr_Z_prime,  // Input data address (Z')
-  output logic [ADDR_W-1:0] addr_b,        // Bias data address  
-  output logic [ADDR_W-1:0] addr_Z,        // VPU output data address
+  // 32b instruction
+  input  logic [31:0]          inst,
 
-  // Data interfaces with UB - use consistent 64-bit notation
-  input logic [63:0] data_Z_prime [0:B-1],   // 8 banks x 64b input data from UB
-  input logic [63:0] data_b,                 // Bias data from UB
-  output logic [63:0] data_Z [0:B-1],        // 8 banks x 64b output data to UB
+  // Memory handshakes
+  input  logic                 mem_rdy,
+  input  logic                 mem_read_en,
+  input  logic                 mem_write_en,
 
-  // Control signals
-  input logic [3:0] vpu_data_pathway,    // Operation mode control
-  output logic vpu_busy,                 // VPU busy signal
+  // Addresses
+  output logic [ADDR_W-1:0]    addr_a,
+  output logic [ADDR_W-1:0]    addr_b,
+  output logic [ADDR_W-1:0]    addr_c,
 
-  // Debug/Monitor outputs
-  output logic signed [DATA_W-1:0] debug_vpu_out_1,
-  output logic signed [DATA_W-1:0] debug_vpu_out_2,
-  output logic signed [DATA_W-1:0] debug_vpu_out_3,
-  output logic signed [DATA_W-1:0] debug_vpu_out_4,
-  output logic debug_valid_out
+  // Data
+  input  logic [DATA_W-1:0]    data_a,
+  input  logic [DATA_W-1:0]    data_b,
+  output logic [DATA_W-1:0]    data_c,
+
+  // Done pulse
+  output logic                 done
 );
 
-  // Internal signals between control and datapath
-  logic signed [DATA_W-1:0] vpu_data_in_1;
-  logic signed [DATA_W-1:0] vpu_data_in_2;
-  logic signed [DATA_W-1:0] vpu_data_in_3;
-  logic signed [DATA_W-1:0] vpu_data_in_4;
-  logic vpu_valid_in_1;
-  logic vpu_valid_in_2;
-  logic vpu_valid_in_3;
-  logic vpu_valid_in_4;
+  // control ↔ datapath wires
+  logic                 dp_start;
+  logic [OP_W-1:0]      dp_opcode;
+  logic [DATA_W-1:0]    dp_operand0, dp_operand1;
+  logic [DATA_W-1:0]    dp_result;
+  logic                 dp_op_valid;
 
-  logic signed [DATA_W-1:0] bias_scalar_in_1;
-  logic signed [DATA_W-1:0] bias_scalar_in_2;
-  logic signed [DATA_W-1:0] bias_scalar_in_3;
-  logic signed [DATA_W-1:0] bias_scalar_in_4;
-  logic signed [DATA_W-1:0] lr_leak_factor_in;
+  // ---------------- Control (explicit mapping) ----------------
+  vpu_control #(
+    .DATA_W    (DATA_W),
+    .ADDR_W    (ADDR_W),
+    .OP_W      (OP_W),
+    .INST_ADDR (INST_ADDR)
+  ) u_ctrl (
+    .clk          (clk),
+    .rst          (rst),
 
-  logic signed [DATA_W-1:0] vpu_data_out_1;
-  logic signed [DATA_W-1:0] vpu_data_out_2;
-  logic signed [DATA_W-1:0] vpu_data_out_3;
-  logic signed [DATA_W-1:0] vpu_data_out_4;
-  logic vpu_valid_out_1;
-  logic vpu_valid_out_2;
-  logic vpu_valid_out_3;
-  logic vpu_valid_out_4;
+    .inst         (inst),
 
-  // Instantiate control unit
-  vpu_ctrl #(
-    .DATA_W(DATA_W),
-    .ADDR_W(ADDR_W),
-    .B(B),
-    .D_OUT(D_OUT)
-  ) ctrl_inst (
-    .clk(clk),
-    .rst(rst),
-    
-    // UB Interface
-    .ub_req_rdy(ub_req_rdy),
-    .ub_req_val(ub_req_val),
-    .addr_Z_prime(addr_Z_prime),
-    .addr_b(addr_b),
-    .addr_Z(addr_Z),
-    .data_Z_prime(data_Z_prime),
-    .data_b(data_b),
-    .data_Z(data_Z),
-    
-    // VPU Datapath Interface
-    .vpu_data_in_1(vpu_data_in_1),
-    .vpu_data_in_2(vpu_data_in_2),
-    .vpu_data_in_3(vpu_data_in_3),
-    .vpu_data_in_4(vpu_data_in_4),
-    .vpu_valid_in_1(vpu_valid_in_1),
-    .vpu_valid_in_2(vpu_valid_in_2),
-    .vpu_valid_in_3(vpu_valid_in_3),
-    .vpu_valid_in_4(vpu_valid_in_4),
-    
-    .bias_scalar_in_1(bias_scalar_in_1),
-    .bias_scalar_in_2(bias_scalar_in_2),
-    .bias_scalar_in_3(bias_scalar_in_3),
-    .bias_scalar_in_4(bias_scalar_in_4),
-    .lr_leak_factor_in(lr_leak_factor_in),
-    
-    .vpu_data_out_1(vpu_data_out_1),
-    .vpu_data_out_2(vpu_data_out_2),
-    .vpu_data_out_3(vpu_data_out_3),
-    .vpu_data_out_4(vpu_data_out_4),
-    .vpu_valid_out_1(vpu_valid_out_1),
-    .vpu_valid_out_2(vpu_valid_out_2),
-    .vpu_valid_out_3(vpu_valid_out_3),
-    .vpu_valid_out_4(vpu_valid_out_4),
-    
-    .vpu_data_pathway(vpu_data_pathway),
-    .vpu_busy(vpu_busy)
+    .mem_rdy      (mem_rdy),
+    .mem_read_en  (mem_read_en),
+    .mem_write_en (mem_write_en),
+
+    .addr_a       (addr_a),
+    .addr_b       (addr_b),
+    .addr_c       (addr_c),
+
+    .data_a       (data_a),
+    .data_b       (data_b),
+    .data_c       (data_c),
+
+    .dp_start     (dp_start),
+    .dp_opcode    (dp_opcode),
+    .dp_operand0  (dp_operand0),
+    .dp_operand1  (dp_operand1),
+    .dp_result    (dp_result),
+    .dp_op_valid  (dp_op_valid),
+
+    .done         (done)
   );
 
-  // Instantiate datapath unit
-  vpu_dpath datapath_inst (
-    .clk(clk),
-    .rst(rst),
-    .vpu_data_pathway(vpu_data_pathway),
-    
-    // Inputs from control unit
-    .vpu_data_in_1(vpu_data_in_1),
-    .vpu_data_in_2(vpu_data_in_2),
-    .vpu_data_in_3(vpu_data_in_3),
-    .vpu_data_in_4(vpu_data_in_4),
-    .vpu_valid_in_1(vpu_valid_in_1),
-    .vpu_valid_in_2(vpu_valid_in_2),
-    .vpu_valid_in_3(vpu_valid_in_3),
-    .vpu_valid_in_4(vpu_valid_in_4),
-    
-    // Bias inputs from control unit
-    .bias_scalar_in_1(bias_scalar_in_1),
-    .bias_scalar_in_2(bias_scalar_in_2),
-    .bias_scalar_in_3(bias_scalar_in_3),
-    .bias_scalar_in_4(bias_scalar_in_4),
-    .lr_leak_factor_in(lr_leak_factor_in),
-    
-    // Outputs to control unit
-    .vpu_data_out_1(vpu_data_out_1),
-    .vpu_data_out_2(vpu_data_out_2),
-    .vpu_data_out_3(vpu_data_out_3),
-    .vpu_data_out_4(vpu_data_out_4),
-    .vpu_valid_out_1(vpu_valid_out_1),
-    .vpu_valid_out_2(vpu_valid_out_2),
-    .vpu_valid_out_3(vpu_valid_out_3),
-    .vpu_valid_out_4(vpu_valid_out_4)
+  // ---------------- Datapath (explicit mapping) ---------------
+  vpu_datapath #(
+    .DATA_W       (DATA_W),
+    .OP_W         (OP_W),
+    .HAS_FP_ADDER (HAS_FP_ADDER)  // keep 0 unless you add the FP adder source
+  ) u_dp (
+    .clk        (clk),
+    .rst        (rst),
+    .start      (dp_start),
+    .operand0   (dp_operand0),
+    .operand1   (dp_operand1),
+    .opcode     (dp_opcode),
+    .result_out (dp_result),
+    .op_valid   (dp_op_valid)
   );
-
-  // Debug outputs - connect to datapath outputs for monitoring
-  assign debug_vpu_out_1 = vpu_data_out_1;
-  assign debug_vpu_out_2 = vpu_data_out_2;
-  assign debug_vpu_out_3 = vpu_data_out_3;
-  assign debug_vpu_out_4 = vpu_data_out_4;
-  assign debug_valid_out = vpu_valid_out_1; // Use first lane as valid indicator
 
 endmodule
+
+`default_nettype wire

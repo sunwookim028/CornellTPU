@@ -1,231 +1,229 @@
-# Test these three pathways:
-# (forward pass: hidden layer computations) input from sys --> bias --> leaky relu --> output
-# (transition) input from sys --> bias --> leaky relu --> loss --> leaky relu derivative (handles a staggered hadamard product)--> output
-# (backward pass) input from sys --> leaky relu derivative --> output
+#=========================================================================
+# test/test_vpu.py — cocotb tests for opcode VPU (ADD/SUB/ReLU)
+#   - Drives a tiny memory model via mem_* handshakes
+#   - Issues 3 instructions (ADD, SUB, RELU)
+#   - Compares results in FP32 bit-level
+#=========================================================================
 
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles
 
-FRAC_BITS = 8
+import struct
 
-def to_fixed(val, frac_bits=FRAC_BITS):
-    """convert python float to signed 16-bit fixed-point (Q8.8)."""
-    scaled = int(round(val * (1 << frac_bits)))
-    return scaled & 0xFFFF
+# ------------------------ Helpers: float <-> u32 -------------------------
 
-def from_fixed(val, frac_bits=FRAC_BITS):
-    """convert signed 16-bit fixed-point to python float."""
-    if val >= 1 << 15:
-        val -= 1 << 16
-    return float(val) / (1 << frac_bits)
+def f2u32(x: float) -> int:
+    """Float32 -> uint32 bit pattern."""
+    return struct.unpack(">I", struct.pack(">f", x))[0]
 
-Z1_pre = [
-    [ 0, 0,],
-    [-0.5792, 0.4234],
-    [ 0.2985, 0.0913],
-    [-0.2807, 0.5147],
-]
+def u322f(u: int) -> float:
+    """uint32 -> float32"""
+    return struct.unpack(">f", struct.pack(">I", u & 0xFFFFFFFF))[0]
 
-B1 = [-0.4939,  0.189 ]
+# ------------------------ Instruction encoding ---------------------------
+# Layout used in the control (lower bits packed):
+# [OP_W-1:0] opcode
+# [OP_W+INST_ADDR-1:OP_W]                a_addr
+# [OP_W+2*INST_ADDR-1:OP_W+INST_ADDR]    b_addr
+# [OP_W+3*INST_ADDR-1:OP_W+2*INST_ADDR]  c_addr
+# [OP_W+4*INST_ADDR-1:OP_W+3*INST_ADDR]  const_addr
+#
+# Defaults assumed: OP_W=4, INST_ADDR=5 (fits in lower 24 bits)
 
-# H1 should be:
-# [[-0.247   0.189 ]
-#  [-0.5366  0.6124]
-#  [-0.0977  0.2803]
-#  [-0.3873  0.7037]]
+OP_ADD  = 0
+OP_SUB  = 1
+OP_RELU = 2
 
-Z2_pre = [
-    [-0.0741],
-    [-0.1014],
-    [ 0.0315],
-    [ 0.0042],
-]
+def enc_inst(opcode, a, b, c, k, op_w=4, inst_addr_bits=5):
+    inst = 0
+    # LSB first: opcode
+    inst |= (opcode & ((1 << op_w) - 1))                   # [op_w-1:0]
+    inst |= (a & ((1 << inst_addr_bits) - 1)) << op_w
+    inst |= (b & ((1 << inst_addr_bits) - 1)) << (op_w + inst_addr_bits)
+    inst |= (c & ((1 << inst_addr_bits) - 1)) << (op_w + 2*inst_addr_bits)
+    inst |= (k & ((1 << inst_addr_bits) - 1)) << (op_w + 3*inst_addr_bits)
+    return inst
 
-B2 = [0.6358]
+# ------------------------ Tiny memory model ------------------------------
 
-Y = [
-    [0.],
-    [1.],
-    [1.],
-    [0.],
-]
+class TinyMem:
+    """Minimal combinational-ish memory responder for this FSM.
+       - When addr_a != 0 and mem_read_en is probed, return data_a for that addr
+       - Same for addr_b / data_b
+       - On write phase, when addr_c != 0 and mem_write_en, consume data_c
+    """
+    def __init__(self):
+        self.ram = {}   # addr -> 32b word
+        self.last_write = None
 
+    def preload(self, addr: int, value_u32: int):
+        self.ram[addr] = value_u32 & 0xFFFFFFFF
 
-# H2 should be:
-# [[0.5617]
-#  [0.5344]
-#  [0.6673]
-#  [0.64  ]]
+    def read(self, addr: int) -> int:
+        return self.ram.get(addr, 0)
 
-# i think this array is calculated from the cached H2 within the VPU. so i think we can delete it here in this testbench? - Evan
-# dL_by_dH2 should look like 
-# = [
-#  [ 0.2808],
-#  [-0.2328],
-#  [-0.1664],
-#  [ 0.32  ]
-#  ]
+    def write(self, addr: int, data_u32: int):
+        self.ram[addr] = data_u32 & 0xFFFFFFFF
+        self.last_write = (addr, data_u32 & 0xFFFFFFFF)
 
-dL_by_H1 = [
- [0.1479,  0.0831],
- [-0.1226, -0.0689],
- [-0.0876, -0.0492],
- [ 0.1685,  0.0947],
- ]
+# ------------------------ Driver coroutines ------------------------------
 
-# so this means we need an h1 now i think to pair with the array above during the backwards pass test. 
-# we need this array during backwwarsd pass cus it turnsint dH/dZ. then hadamarding it with the above will give us dL/dZ
-H1 = [
- [-0.247,   0.189 ],
- [-0.5366,  0.6124],
- [-0.0977,  0.2803],
- [-0.3873,  0.7037]
- ]
+async def reset(dut):
+    dut.rst.value = 1
+    await RisingEdge(dut.clk)
+    dut.rst.value = 0
+    await RisingEdge(dut.clk)
 
+async def mem_driver(dut, mem):
+    from cocotb.triggers import RisingEdge
+
+    def stable(v):
+        s = v.binstr.lower()
+        return ("x" not in s) and ("z" not in s)
+
+    dut.mem_rdy.value = 0
+    dut.mem_read_en.value = 0
+    dut.mem_write_en.value = 0
+    dut.data_a.value = 0
+    dut.data_b.value = 0
+
+    while True:
+        await RisingEdge(dut.clk)
+
+        dut.mem_rdy.value = 0
+        dut.mem_read_en.value = 0
+        dut.mem_write_en.value = 0
+
+        A = int(dut.addr_a.value)
+        if A != 0:
+            dut.data_a.value = mem.read(A)
+            dut.mem_read_en.value = 1
+            dut.mem_rdy.value = 1
+            continue
+
+        B = int(dut.addr_b.value)
+        if B != 0:
+            dut.data_b.value = mem.read(B)
+            dut.mem_read_en.value = 1
+            dut.mem_rdy.value = 1
+            continue
+
+        C = int(dut.addr_c.value)
+        if C != 0:
+            dut.mem_write_en.value = 1
+            if stable(dut.data_c.value):
+                mem.write(C, int(dut.data_c.value))
+
+# ------------------------ Tests ------------------------------------------
 
 @cocotb.test()
-async def test_vector_unit(dut):
-    clock = Clock(dut.clk, 10, units="ns")
-    cocotb.start_soon(clock.start())
-    await RisingEdge(dut.clk)
+async def probe_once(dut):
+    from cocotb.triggers import RisingEdge, ClockCycles
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.rst.value = 1; await RisingEdge(dut.clk)
+    dut.rst.value = 0; await RisingEdge(dut.clk)
 
-    # Reset
-    dut.rst.value = 1
-    await RisingEdge(dut.clk)
-
-    ### Test forward pass pathway
-    # ub/input -> bias -> lr -> ub/output
-    dut.rst.value = 0
-    dut.data_pathway.value = 0b1100 
-    
-    dut.vpu_valid_in_1.value = 1
-    dut.vpu_valid_in_2.value = 1
-
-    # Comes from UB
-    dut.bias_scalar_in_1.value = to_fixed(B1[0])
-    dut.bias_scalar_in_2.value = to_fixed(B1[1])       
-    dut.lr_leak_factor_in.value = to_fixed(0.5)
-    for z in Z1_pre: # Load in z rows one at a time
-        dut.vpu_data_in_1.value = to_fixed(z[0])
-        dut.vpu_data_in_2.value = to_fixed(z[1])
+    # Don’t drive anything else; just watch addresses and done
+    for _ in range(100):
         await RisingEdge(dut.clk)
-    dut.vpu_data_in_1.value = to_fixed(0) # reset everything
-    dut.vpu_data_in_2.value = to_fixed(0)
-    dut.vpu_valid_in_1.value = 0
-    dut.vpu_valid_in_2.value = 0
-    await ClockCycles(dut.clk, 10)
+        A = int(dut.addr_a.value)
+        B = int(dut.addr_b.value)
+        C = int(dut.addr_c.value)
+        D = int(dut.done.value)
+        if A or B or C or D:
+            dut._log.info(f"A={A} B={B} C={C} done={D}")
 
+@cocotb.test()
+async def test_add_sub_relu(dut):
+    """Issue three instructions (ADD, SUB, RELU) and check results."""
 
-    ### Test transition pathway
-    # ub/input -> bias -> lr -> loss -> lr_d -> ub/output
-    dut.rst.value = 1
-    await RisingEdge(dut.clk)
+    # Clock 100MHz
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
 
-    dut.rst.value = 0
-    dut.data_pathway.value = 0b1111
-    dut.vpu_valid_in_1.value = 1
-    dut.vpu_valid_in_2.value = 1
+    # Bring-up
+    await reset(dut)
 
-    dut.bias_scalar_in_1.value = to_fixed(B2[0])
-    # dut.bias_scalar_in_1.value = to_fixed(B2[1])
-    dut.lr_leak_factor_in.value = to_fixed(0.5)
-    dut.inv_batch_size_times_two_in = to_fixed(2/4)  # 2/N where N is our batch size which is 4
-    dut.vpu_data_in_1.value = to_fixed(Z2_pre[0][0])
-    # dut.vpu_data_in_2.value = to_fixed(z[1])
-    await RisingEdge(dut.clk)
+    # If your top uses different default param widths, set them here for encoding
+    OP_W = 4
+    INST_BITS = 5
 
-    dut.vpu_data_in_1.value = to_fixed(Z2_pre[1][0])
-    # dut.vpu_data_in_2.value = to_fixed(z[1])
-    await RisingEdge(dut.clk)
+    # Build a tiny memory map
+    mem = TinyMem()
 
-    ## START PUTTING TARGET VALUES HERE??? IDK? if not, then shift it down by 1 clk cycle
-    dut.vpu_data_in_1.value = to_fixed(Z2_pre[2][0])
-    # dut.vpu_data_in_2.value = to_fixed(z[1])
-    dut.Y_in_1.value = to_fixed(Y[0][0])
-    # dut.Y_in_2.value = to_fixed(Y[0][0])
-    await RisingEdge(dut.clk)
+    # Addresses we will use (<= 2^INST_BITS-1)
+    A = 1
+    B = 2
+    C = 3
+    K = 4   # const (not used yet, reserved)
 
+    # Preload operands in FP32
+    a_f = 1.5
+    b_f = 2.25
+    n_f = -3.0
 
-    dut.vpu_data_in_1.value = to_fixed(Z2_pre[3][0])
-    # dut.vpu_data_in_2.value = to_fixed(z[1])
-    dut.Y_in_1.value = to_fixed(Y[1][0])
-    # dut.Y_in_2.value = to_fixed(Y[0][0])
-    await RisingEdge(dut.clk)
+    mem.preload(A, f2u32(a_f))
+    mem.preload(B, f2u32(b_f))
+    mem.preload(K, f2u32(0.0))  # unused here
 
-    dut.Y_in_1.value = to_fixed(Y[2][0])
-    # dut.Y_in_2.value = to_fixed(Y[0][0])
-    dut.vpu_valid_in_1 = 0
-    await RisingEdge(dut.clk)
+    # Start memory responder
+    cocotb.start_soon(mem_driver(dut, mem))
 
-    dut.Y_in_1.value = to_fixed(Y[3][0])
-    # dut.Y_in_2.value = to_fixed(Y[0][0])
-    await RisingEdge(dut.clk)
-    
-    dut.vpu_valid_in_1.value = 0
-    # dut.vpu_valid_in_2.value = 0
-    await ClockCycles(dut.clk, 10)
+    # ------------------ 1) ADD:  C = A + B  ------------------
+    inst_add = enc_inst(OP_ADD, A, B, C, K, OP_W, INST_BITS)
+    dut.inst.value = inst_add
 
+    # Wait for completion
+    done = 0
+    for _ in range(200):
+      await RisingEdge(dut.clk)
+      if int(dut.done.value):
+        done = 1
+        break
+    assert done, "ADD: done was never asserted"
 
+    # Check memory write at C
+    waddr, wdata = mem.last_write
+    assert waddr == C, f"ADD: write address mismatch, got {waddr}, exp {C}"
+    got_f = u322f(wdata)
+    exp_f = a_f + b_f
+    assert abs(got_f - exp_f) < 1e-6, f"ADD: {got_f} != {exp_f}"
 
+    # ------------------ 2) SUB:  C = A - B  ------------------
+    inst_sub = enc_inst(OP_SUB, A, B, C, K, OP_W, INST_BITS)
+    dut.inst.value = inst_sub
 
-    # Test backward pass pathway
-    # input from sys --> leaky relu derivative --> output (backward pass)
-    dut.rst.value = 1
-    await RisingEdge(dut.clk)
+    done = 0
+    for _ in range(200):
+      await RisingEdge(dut.clk)
+      if int(dut.done.value):
+        done = 1
+        break
+    assert done, "SUB: done was never asserted"
 
-    # Test forward pass pathway
-    dut.rst.value = 0
-    dut.data_pathway.value = 0b0001 
+    waddr, wdata = mem.last_write
+    assert waddr == C, f"SUB: write address mismatch, got {waddr}, exp {C}"
+    got_f = u322f(wdata)
+    exp_f = a_f - b_f
+    assert abs(got_f - exp_f) < 1e-6, f"SUB: {got_f} != {exp_f}"
 
-    ## PREMATURELY start inputting Hs 1 clk cycle before we input the dL/dH values because it takes 1 clk cycle to compute its dH/dZ.
-    ## ^^ maybe its a good assumption to have in future that activation derivatives are NOT combinational, but take multiple clk cycles. 
-    await RisingEdge(dut.clk)
+    # ------------------ 3) RELU: C = relu(A)  ----------------
+    # For RELU, reload A with a negative number to test clamping to 0
+    mem.preload(A, f2u32(n_f))
 
-    # WE NEED TO INPUT A dL/dH here. and in the same clk cycle, we also need to input an H value, which becomes dH/dZ. 
-    dut.vpu_data_in_1.value = to_fixed(dL_by_H1[0][0])
-    dut.H_in_1.value = to_fixed(H1[0][0])
+    inst_relu = enc_inst(OP_RELU, A, B, C, K, OP_W, INST_BITS)
+    dut.inst.value = inst_relu
 
-    dut.vpu_valid_in_1 = 1 
-    dut.vpu_valid_in_2 = 0
+    done = 0
+    for _ in range(200):
+      await RisingEdge(dut.clk)
+      if int(dut.done.value):
+        done = 1
+        break
+    assert done, "RELU: done was never asserted"
 
-    await RisingEdge(dut.clk)
-    dut.vpu_data_in_1.value = to_fixed(dL_by_H1[1][0])
-    dut.vpu_data_in_2.value = to_fixed(dL_by_H1[0][1])
-
-    dut.H_in_1.value = to_fixed(H1[1][0])
-    dut.H_in_2.value = to_fixed(H1[0][1])
-
-    dut.vpu_valid_in_1 = 1
-    dut.vpu_valid_in_2 = 1
-    await RisingEdge(dut.clk)
-
-    dut.vpu_data_in_1.value = to_fixed(dL_by_H1[2][0])
-    dut.vpu_data_in_2.value = to_fixed(dL_by_H1[1][1])
-
-    dut.H_in_1.value = to_fixed(H1[2][0])
-    dut.H_in_2.value = to_fixed(H1[1][1])
-
-    dut.vpu_valid_in_1 = 1
-    dut.vpu_valid_in_2 = 1
-    await RisingEdge(dut.clk)
-
-    dut.vpu_data_in_1.value = to_fixed(dL_by_H1[3][0])
-    dut.vpu_data_in_2.value = to_fixed(dL_by_H1[2][1])
-
-    dut.H_in_1.value = to_fixed(H1[3][0])
-    dut.H_in_2.value = to_fixed(H1[2][1])
-
-    dut.vpu_valid_in_1.value = 1
-    dut.vpu_valid_in_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.vpu_data_in_2.value = to_fixed(dL_by_H1[3][1])
-
-    dut.H_in_2.value = to_fixed(H1[3][1])
-
-    dut.vpu_valid_in_1 = 0
-    dut.vpu_valid_in_2 = 1
-
-
-    await ClockCycles(dut.clk, 10)
+    waddr, wdata = mem.last_write
+    assert waddr == C, f"RELU: write address mismatch, got {waddr}, exp {C}"
+    got_f = u322f(wdata)
+    exp_f = max(0.0, n_f)
+    assert abs(got_f - exp_f) < 1e-6, f"RELU: {got_f} != {exp_f}"

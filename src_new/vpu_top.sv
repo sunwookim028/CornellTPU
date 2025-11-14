@@ -53,14 +53,35 @@ assign addr_b_ext = {{(ADDR_W-INST_ADDR){1'b0}}, inst_addr_b};
 assign addr_c_ext = {{(ADDR_W-INST_ADDR){1'b0}}, inst_addr_c};
 assign addr_const_ext = {{(ADDR_W-INST_ADDR){1'b0}}, inst_addr_const};
 
+// Mem latency counter
+logic [1:0] mem_cnt; 
+logic       mem_cnt_en; 
+logic       mem_cnt_done;
+
+always_ff @(posedge clk) begin
+  if (rst) begin
+    mem_cnt <= 2'd0;
+  end else if (mem_cnt_en) begin
+    if(mem_cnt != 2'd0)
+    mem_cnt <= mem_cnt - 1; 
+  end
+end
+
+assign mem_cnt_done = (mem_cnt == 2'd0);
+
+
 // FSM states
-typedef enum logic [2:0] {
-  IDLE = 3'd0,
-  DATA_A = 3'd1,
-  DATA_B = 3'd2,
-  DATA_CONST = 3'd3,
-  PROCESSING = 3'd4,
-  DATA_C = 3'd5
+typedef enum logic [3:0] {
+  IDLE = 4'd0,
+  DATA_A_REQ = 4'd1,
+  DATA_A_WAIT = 4'd2,
+  DATA_B_REQ = 4'd3,
+  DATA_B_WAIT = 4'd4,
+  DATA_CONST_REQ = 4'd5,
+  DATA_CONST_WAIT = 4'd6,
+  PROCESSING = 4'd7,
+  DATA_C_REQ = 4'd8,
+  DATA_C_WAIT = 4'd9
 } state_t;
 
 state_t current_state, next_state;
@@ -79,26 +100,27 @@ always_ff @(posedge clk) begin
     current_state <= IDLE;
     a_val <= '0;
     b_val <= '0;
+    c_val <= '0;
     data_a_captured <= 1'b0;
     data_b_captured <= 1'b0;
     data_a_valid <= 1'b0;
     data_b_valid <= 1'b0;
   end else begin
-    current_state <= next_state;
+    current_state <= next_state; 
+    end 
 
     if (mem_read_en) begin
-      if (current_state == DATA_A) begin
+      if (current_state == DATA_A_WAIT && mem_cnt_done) begin
         a_val <= data_a;
         data_a_captured <= 1'b1;
+        data_a_valid <= 1'b1;
       end
-      if (current_state == DATA_B || current_state == DATA_CONST) begin
+      if ((current_state == DATA_B_WAIT || current_state == DATA_CONST_WAIT) && mem_cnt_done) begin
         b_val <= data_b;
         data_b_captured <= 1'b1;
+        data_b_valid <= 1'b1;
       end
     end
-    
-    data_a_valid <= data_a_captured;
-    data_b_valid <= data_b_captured;
     
     if (current_state == IDLE) begin
       data_a_captured <= 1'b0;
@@ -125,50 +147,79 @@ always_comb begin
   addr_b = '0;
   addr_c = '0;
   data_c = c_val; 
+  mem_cnt_en = 1'b0
   comp_done = 1'b0;
   
   case (current_state)
     IDLE: begin
       if (mem_rdy) begin
-        next_state = DATA_A;
+        next_state = DATA_A_REQ;
       end
     end
     
-    DATA_A: begin
+    DATA_A_REQ: begin
       addr_a = addr_a_ext;
-      if (data_a_valid) begin
-        if (opcode == 4'd2) begin 
-          next_state = PROCESSING;
+      mem_cnt = 1'b1;
+      next_state = DATA_A_WAIT;
+    end
+
+    DATA_A_WAIT: begin
+      addr_a = addr_a_ext;
+      mem_cnt_en = 1'b1;
+      if (mem_cnt_done) begin
+        if (opcode == 4'd2) begin
+        next_state = PROCESSING;
         end else if (use_constant) begin
-          next_state = DATA_CONST;
+        next_state = DATA_CONST_REQ;
         end else begin
-          next_state = DATA_B;
+        next_state = DATA_B_REQ;
         end
       end
     end
     
-    DATA_B: begin
+    DATA_B_REQ: begin
       addr_b = addr_b_ext;
-      if (data_b_valid) begin
+      mem_cnt = 1'b1;
+      next_state = DATA_B_WAIT;
+    end
+
+    DATA_B_WAIT: begin
+      addr_b = addr_b_ext;
+      mem_cnt_en = 1'b1;
+      if (mem_cnt_done) begin
         next_state = PROCESSING;
       end
     end
     
-    DATA_CONST: begin
+    DATA_CONST_REQ: begin
       addr_b = addr_const_ext;
-      if (data_b_valid) begin
+      mem_cnt_en = 1'b1;
+      next_state = DATA_CONST_WAIT;
+    end
+
+    DATA_CONST_WAIT: begin
+      addr_b = addr_const_ext;
+      mem_cnt_en = 1'b1;
+      if (mem_cnt_done) begin
         next_state = PROCESSING;
       end
     end
     
     PROCESSING: begin
       vpu_op_start = 1'b1;
-      next_state = DATA_C;
+      next_state = DATA_C_REQ;
     end
     
-    DATA_C: begin
+    DATA_C_REQ: begin
       addr_c = addr_c_ext;
-      if (mem_write_en) begin
+      mem_cnt = 1'b1;
+      next_state = DATA_C_WAIT;
+    end
+
+    DATA_C_WAIT: begin
+      addr_c = addr_c_ext;
+      mem_cnt_en = 1'b1;
+      if (mem_cnt_done) begin
         comp_done = 1'b1;
         next_state = IDLE;
       end

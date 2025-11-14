@@ -1,8 +1,9 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1760122877" />
-    <testcase name="test_vector_unit" classname="test_vpu" file="/home/lan64/TinyTPU/test/test_vpu.py" lineno="87" time="0.002012968063354492" sim_time_ns="10.001" ratio_time="4968.285479568874">
-      <failure message="Test failed with RANDOM_SEED=1760122877" />
+    <property name="random_seed" value="1762553687" />
+    <testcase name="probe_once" classname="test_vpu" file="/home/lan64/TinyTPU/test/test_vpu.py" lineno="120" time="0.009398221969604492" sim_time_ns="1010.001" ratio_time="107467.24255572185" />
+    <testcase name="test_add_sub_relu" classname="test_vpu" file="/home/lan64/TinyTPU/test/test_vpu.py" lineno="137" time="0.0214688777923584" sim_time_ns="2020.001" ratio_time="94089.73396452963">
+      <failure message="Test failed with RANDOM_SEED=1762553687" />
     </testcase>
   </testsuite>
 </testsuites>
