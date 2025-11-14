@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-//`default_nettype none
+`default_nettype none
 
 module systolic_wrapper #(
     parameter int N = 4,
