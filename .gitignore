@@ -2,11 +2,10 @@ __pycache__/
 .pytest_cache/
 src_jl_noted/
 waveforms/
-pymtl_tests
+pymtl_tests/
 sim_build/
 build/
-results.xml
-src/
 src_4x4/
 test/
 test_4x4/
+results.xml

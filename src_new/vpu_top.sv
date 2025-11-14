@@ -1,6 +1,6 @@
 module vpu_top #(
   parameter int DATA_W = 32,
-  parameter int ADDR_W = 16,
+  parameter int ADDR_W = 13,
   parameter int OP_W = 4,
   parameter int INST_ADDR = 5,
   parameter int M = 4
@@ -103,8 +103,6 @@ always_ff @(posedge clk) begin
     c_val <= '0;
     data_a_captured <= 1'b0;
     data_b_captured <= 1'b0;
-    data_a_valid <= 1'b0;
-    data_b_valid <= 1'b0;
   end else begin
     current_state <= next_state; 
     end 
