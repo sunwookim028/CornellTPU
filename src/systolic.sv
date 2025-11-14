@@ -5,100 +5,100 @@
 module systolic #(
     parameter int SYSTOLIC_ARRAY_WIDTH = 4
 )(
-    input logic clk,
-    input logic rst,
+    input  logic clk,
+    input  logic rst,
 
     // input signals from left side of systolic array
-    input logic [15:0] sys_data_in_11,
-    input logic [15:0] sys_data_in_21,
-    input logic [15:0] sys_data_in_31,
-    input logic [15:0] sys_data_in_41,
+    input  logic [31:0] sys_data_in_11,
+    input  logic [31:0] sys_data_in_21,
+    input  logic [31:0] sys_data_in_31,
+    input  logic [31:0] sys_data_in_41,
 
-    input logic sys_start_1,    // start signal for row 1
-    input logic sys_start_2,    // start signal for row 2
-    input logic sys_start_3,    // start signal for row 3
-    input logic sys_start_4,    // start signal for row 4
+    input  logic sys_start_1,    // start signal for row 1
+    input  logic sys_start_2,    // start signal for row 2
+    input  logic sys_start_3,    // start signal for row 3
+    input  logic sys_start_4,    // start signal for row 4
 
     // output signals from bottom of systolic array 
-    output logic [15:0] sys_data_out_41,
-    output logic [15:0] sys_data_out_42,
-    output logic [15:0] sys_data_out_43,
-    output logic [15:0] sys_data_out_44,
-    output wire sys_valid_out_41, 
-    output wire sys_valid_out_42,
-    output wire sys_valid_out_43, 
-    output wire sys_valid_out_44,
+    output logic [31:0] sys_data_out_41,
+    output logic [31:0] sys_data_out_42,
+    output logic [31:0] sys_data_out_43,
+    output logic [31:0] sys_data_out_44,
+    output wire         sys_valid_out_41, 
+    output wire         sys_valid_out_42,
+    output wire         sys_valid_out_43, 
+    output wire         sys_valid_out_44,
 
     // input signals from top of systolic array
-    input logic [15:0] sys_weight_in_11, 
-    input logic [15:0] sys_weight_in_12,
-    input logic [15:0] sys_weight_in_13, 
-    input logic [15:0] sys_weight_in_14,
-    input logic sys_accept_w_1,             // accept weight signal propagates only from top to bottom in column 1
-    input logic sys_accept_w_2,             // accept weight signal propagates only from top to bottom in column 2
-    input logic sys_accept_w_3,             // accept weight signal propagates only from top to bottom in column 3
-    input logic sys_accept_w_4,             // accept weight signal propagates only from top to bottom in column 4
+    input  logic [31:0] sys_weight_in_11, 
+    input  logic [31:0] sys_weight_in_12,
+    input  logic [31:0] sys_weight_in_13, 
+    input  logic [31:0] sys_weight_in_14,
+    input  logic        sys_accept_w_1,   // accept weight signal propagates only from top to bottom in column 1
+    input  logic        sys_accept_w_2,   // accept weight signal propagates only from top to bottom in column 2
+    input  logic        sys_accept_w_3,   // accept weight signal propagates only from top to bottom in column 3
+    input  logic        sys_accept_w_4,   // accept weight signal propagates only from top to bottom in column 4
 
-    input logic sys_switch_in,               // switch signal copies weight from shadow buffer to active buffer. propagates from top left to bottom right
+    input  logic        sys_switch_in,    // switch signal copies weight from shadow buffer to active buffer. propagates from top left to bottom right
 
-    input logic [15:0] ub_rd_col_size_in,
-    input logic ub_rd_col_size_valid_in
+    input  logic [31:0] ub_rd_col_size_in,
+    input  logic        ub_rd_col_size_valid_in
 );
 
     // input_out for each PE (left to right)
-    logic [15:0] pe_input_out_11;
-    logic [15:0] pe_input_out_21;
-    logic [15:0] pe_input_out_31;
-    logic [15:0] pe_input_out_41;
+    logic [31:0] pe_input_out_11;
+    logic [31:0] pe_input_out_21;
+    logic [31:0] pe_input_out_31;
+    logic [31:0] pe_input_out_41;
 
-    logic [15:0] pe_input_out_12;
-    logic [15:0] pe_input_out_22;
-    logic [15:0] pe_input_out_32;
-    logic [15:0] pe_input_out_42;
+    logic [31:0] pe_input_out_12;
+    logic [31:0] pe_input_out_22;
+    logic [31:0] pe_input_out_32;
+    logic [31:0] pe_input_out_42;
     
-    logic [15:0] pe_input_out_13;
-    logic [15:0] pe_input_out_23;
-    logic [15:0] pe_input_out_33;
-    logic [15:0] pe_input_out_43;
+    logic [31:0] pe_input_out_13;
+    logic [31:0] pe_input_out_23;
+    logic [31:0] pe_input_out_33;
+    logic [31:0] pe_input_out_43;
 
 
     // psum_out for each PE (top to bottom)
-    logic [15:0] pe_psum_out_11;
-    logic [15:0] pe_psum_out_12;
-    logic [15:0] pe_psum_out_13;
-    logic [15:0] pe_psum_out_14;
+    logic [31:0] pe_psum_out_11;
+    logic [31:0] pe_psum_out_12;
+    logic [31:0] pe_psum_out_13;
+    logic [31:0] pe_psum_out_14;
 
-    logic [15:0] pe_psum_out_21;
-    logic [15:0] pe_psum_out_22;
-    logic [15:0] pe_psum_out_23;
-    logic [15:0] pe_psum_out_24;
+    logic [31:0] pe_psum_out_21;
+    logic [31:0] pe_psum_out_22;
+    logic [31:0] pe_psum_out_23;
+    logic [31:0] pe_psum_out_24;
 
-    logic [15:0] pe_psum_out_31;
-    logic [15:0] pe_psum_out_32;
-    logic [15:0] pe_psum_out_33;
-    logic [15:0] pe_psum_out_34;
+    logic [31:0] pe_psum_out_31;
+    logic [31:0] pe_psum_out_32;
+    logic [31:0] pe_psum_out_33;
+    logic [31:0] pe_psum_out_34;
 
-    logic [15:0] pe_psum_out_41;
-    logic [15:0] pe_psum_out_42;
-    logic [15:0] pe_psum_out_43;
-    logic [15:0] pe_psum_out_44;
+    logic [31:0] pe_psum_out_41;
+    logic [31:0] pe_psum_out_42;
+    logic [31:0] pe_psum_out_43;
+    logic [31:0] pe_psum_out_44;
 
 
     // weight_out for each PE (top to bottom)
-    logic [15:0] pe_weight_out_11;
-    logic [15:0] pe_weight_out_12;
-    logic [15:0] pe_weight_out_13;
-    logic [15:0] pe_weight_out_14;
+    logic [31:0] pe_weight_out_11;
+    logic [31:0] pe_weight_out_12;
+    logic [31:0] pe_weight_out_13;
+    logic [31:0] pe_weight_out_14;
 
-    logic [15:0] pe_weight_out_21;
-    logic [15:0] pe_weight_out_22;
-    logic [15:0] pe_weight_out_23;
-    logic [15:0] pe_weight_out_24;
+    logic [31:0] pe_weight_out_21;
+    logic [31:0] pe_weight_out_22;
+    logic [31:0] pe_weight_out_23;
+    logic [31:0] pe_weight_out_24;
 
-    logic [15:0] pe_weight_out_31;
-    logic [15:0] pe_weight_out_32;
-    logic [15:0] pe_weight_out_33;
-    logic [15:0] pe_weight_out_34;
+    logic [31:0] pe_weight_out_31;
+    logic [31:0] pe_weight_out_32;
+    logic [31:0] pe_weight_out_33;
+    logic [31:0] pe_weight_out_34;
 
     // switch_out for each PE
     logic pe_switch_out_11;
@@ -160,7 +160,7 @@ module systolic #(
         .pe_switch_out(pe_switch_out_11),
 
         .pe_input_in(sys_data_in_11),
-        .pe_psum_in(16'b0),
+        .pe_psum_in(32'b0),
         .pe_weight_in(sys_weight_in_11),
 
         .pe_input_out(pe_input_out_11),
@@ -181,7 +181,7 @@ module systolic #(
         .pe_switch_out(pe_switch_out_12),
 
         .pe_input_in(pe_input_out_11),
-        .pe_psum_in(16'b0),
+        .pe_psum_in(32'b0),
         .pe_weight_in(sys_weight_in_12),
 
         .pe_input_out(pe_input_out_12),
@@ -202,7 +202,7 @@ module systolic #(
         .pe_switch_out(pe_switch_out_13),
 
         .pe_input_in(pe_input_out_12),
-        .pe_psum_in(16'b0),
+        .pe_psum_in(32'b0),
         .pe_weight_in(sys_weight_in_13),
 
         .pe_input_out(pe_input_out_13),
@@ -223,7 +223,7 @@ module systolic #(
         .pe_switch_out(pe_switch_out_14),
 
         .pe_input_in(pe_input_out_13),
-        .pe_psum_in(16'b0),
+        .pe_psum_in(32'b0),
         .pe_weight_in(sys_weight_in_14),
 
         .pe_input_out(/* right edge unused */),
@@ -499,6 +499,5 @@ module systolic #(
     assign sys_valid_out_42 = pe_valid_out_42;
     assign sys_valid_out_43 = pe_valid_out_43;
     assign sys_valid_out_44 = pe_valid_out_44;
-
 
 endmodule

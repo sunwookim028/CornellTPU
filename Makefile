@@ -21,7 +21,9 @@ SOURCES = src/pe.sv \
 		  src/systolic_wrapper.sv \
 		  src/mock_memory.sv \
 		  src/top_systolic_test.sv \
-          src/fixedpoint.sv
+          src/fixedpoint.sv \
+		  src/fp32_add.sv \
+		  src/fp32_mul.sv 
 
 # MODIFY 1) variable next to -s 
 # MODIFY 2) variable next to $(SOURCES)
@@ -30,6 +32,18 @@ SOURCES = src/pe.sv \
 
 
 # Test targets
+test_fp32_mul: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s fp32_mul -g2012 $(SOURCES) test/dump_fp32_mul.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_fp32_mul $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv fp32_mul.vcd waveforms/ 2>/dev/null || true
+
+test_fp32_add: $(SIM_BUILD_DIR)
+	$(IVERILOG) -o $(SIM_VVP) -s fp32_add -g2012 $(SOURCES) test/dump_fp32_add.sv
+	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_fp32_add $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)
+	! grep failure results.xml
+	mv fp32_add.vcd waveforms/ 2>/dev/null || true
+
 test_pe: $(SIM_BUILD_DIR)
 	$(IVERILOG) -o $(SIM_VVP) -s pe -s dump -g2012 $(SOURCES) test/dump_pe.sv
 	PYTHONOPTIMIZE=$(NOASSERT) MODULE=test_pe $(VVP) -M $(COCOTB_LIBS) -m libcocotbvpi_icarus $(SIM_VVP)

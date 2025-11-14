@@ -2,11 +2,11 @@
 `default_nettype none
 
 module systolic_wrapper #(
-    parameter int N = 4,
-    parameter int DATA_WIDTH = 16, // AKA Word size. This should be changed to 32 - we need systolic array switched to FP32
+    parameter int N             = 4,
+    parameter int DATA_WIDTH    = 32, // FP32 bit patterns
     parameter int BANKING_FACTOR = 1, // How many data elements can be loaded at a time
     parameter int ADDRESS_WIDTH = 13, // Bits in each address
-    parameter int MEM_LATENCY = 2 // Latency in cycles from memory request to valid response
+    parameter int MEM_LATENCY   = 2   // Latency in cycles from memory request to valid response
 )(
     input  logic clk,
     input  logic rst,
@@ -15,20 +15,21 @@ module systolic_wrapper #(
     input  logic start,
     output logic done,
 
-    input logic [ADDRESS_WIDTH-1:0] base_addr_w,
-    input logic [ADDRESS_WIDTH-1:0] base_addr_x,
-    input logic [ADDRESS_WIDTH-1:0] base_addr_out,
+    input  logic [ADDRESS_WIDTH-1:0] base_addr_w,
+    input  logic [ADDRESS_WIDTH-1:0] base_addr_x,
+    input  logic [ADDRESS_WIDTH-1:0] base_addr_out,
 
     // To/from memory:
-    output logic [ADDRESS_WIDTH-1:0] mem_req_addr,
-    output logic signed [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_req_data,
-    input  logic signed [BANKING_FACTOR*DATA_WIDTH-1 : 0] mem_resp_data,
-    output logic mem_read_en,
-    output logic mem_write_en
+    output logic [ADDRESS_WIDTH-1:0]              mem_req_addr,
+    output logic [BANKING_FACTOR*DATA_WIDTH-1:0]  mem_req_data,
+    input  logic [BANKING_FACTOR*DATA_WIDTH-1:0]  mem_resp_data,
+    output logic                                  mem_read_en,
+    output logic                                  mem_write_en
 );
 
     // Temporary (for debugging and facilitating Cocotb testbench):
-    logic signed [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
+    // Store FP32 bit patterns (no arithmetic here, so unsigned is fine)
+    logic [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
 
     // Helper function for indexing matrices with data stored in row-major order
     function automatic int idx(input int r, input int c);
@@ -36,10 +37,10 @@ module systolic_wrapper #(
     endfunction
 
     // Local buffer memory for W and X matrices
-    logic signed [DATA_WIDTH-1:0] weight_matrix [N*N-1:0];
-    logic signed [DATA_WIDTH-1:0] x_matrix [N*N-1:0];
+    logic [DATA_WIDTH-1:0] weight_matrix [N*N-1:0];
+    logic [DATA_WIDTH-1:0] x_matrix      [N*N-1:0];
 
-    localparam int TOTAL_ELEMS = N*N;
+    localparam int TOTAL_ELEMS    = N*N;
     localparam int BYTES_PER_BEAT = BANKING_FACTOR * (DATA_WIDTH / 8);
 
     // Registers to latch matrix addresses
@@ -51,25 +52,30 @@ module systolic_wrapper #(
     // Timer for memory fixed latency
     logic [$clog2(MEM_LATENCY+1)-1:0] mem_latency_timer;
 
-    // X and W matrix elements for input into array
-    logic signed [DATA_WIDTH-1:0]
+    // X and W matrix elements for input into array (FP32 bit patterns)
+    logic [DATA_WIDTH-1:0]
         sys_weight_in_11, sys_weight_in_12, sys_weight_in_13, sys_weight_in_14,
         sys_data_in_11,   sys_data_in_21,   sys_data_in_31,   sys_data_in_41;
+
     // Control signals
     logic
         sys_accept_w_1, sys_accept_w_2, sys_accept_w_3, sys_accept_w_4,
         sys_start_1, sys_start_2, sys_start_3, sys_start_4,
         sys_switch_in;
-    // Output matrix elements
-    logic signed [DATA_WIDTH-1:0]
+
+    // Output matrix elements (FP32 bit patterns)
+    logic [DATA_WIDTH-1:0]
         sys_data_out_41, sys_data_out_42, sys_data_out_43, sys_data_out_44;
+
     // Status signals
     logic
         sys_valid_out_41, sys_valid_out_42, sys_valid_out_43, sys_valid_out_44;
 
-    logic [15:0] ub_rd_col_size_in = 16'd0; // Not yet used in systolic
-    logic ub_rd_col_size_valid_in  = 1'b0; // Not yet used in systolic
+    // These are not data-width dependent
+    logic [15:0] ub_rd_col_size_in   = 16'd0; 
+    logic        ub_rd_col_size_valid_in = 1'b0; 
 
+    // Systolic array (assumed 32-bit datapath internally)
     systolic #( N ) array (
         .clk(clk),
         .rst(rst),
@@ -123,9 +129,9 @@ module systolic_wrapper #(
     // Collect outputs from systolic array when valid out signals asserted
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (int i=0; i<N; i++) row_ptr[i] <= 0;
-            for (int r=0; r<N; r++)
-                for (int c=0; c<N; c++)
+            for (int i = 0; i < N; i++) row_ptr[i] <= 0;
+            for (int r = 0; r < N; r++)
+                for (int c = 0; c < N; c++)
                     out_matrix[idx(r,c)] <= '0;
         end else begin
             if (sys_valid_out_41 && row_ptr[0] < N) begin
@@ -156,10 +162,10 @@ module systolic_wrapper #(
             // Reset run state counter
             phase_counter <= '0;
 
-            mem_req_addr <= '0;
-            mem_req_data <= '0;
-            mem_read_en <= 0;
-            mem_write_en <= 0;
+            mem_req_addr   <= '0;
+            mem_req_data   <= '0;
+            mem_read_en    <= 0;
+            mem_write_en   <= 0;
 
             mem_latency_timer <= '0; // Cycles since memory request
 
@@ -168,8 +174,8 @@ module systolic_wrapper #(
             done <= 0;
 
             // Reset latched base addresses
-            base_addr_x_reg <= '0;
-            base_addr_w_reg <= '0;
+            base_addr_x_reg   <= '0;
+            base_addr_w_reg   <= '0;
             base_addr_out_reg <= '0;
 
             // Datapath control signals
@@ -177,51 +183,55 @@ module systolic_wrapper #(
             sys_accept_w_2 <= 0;
             sys_accept_w_3 <= 0;
             sys_accept_w_4 <= 0;
-            sys_start_1 <= 0;
-            sys_start_2 <= 0;
-            sys_start_3 <= 0;
-            sys_start_4 <= 0;
-            sys_switch_in <= 0;
-            sys_weight_in_11 <= 16'd0;
-            sys_weight_in_12 <= 16'd0;
-            sys_weight_in_13 <= 16'd0;
-            sys_weight_in_14 <= 16'd0;
-            sys_data_in_11 <= 16'd0;
-            sys_data_in_21 <= 16'd0;
-            sys_data_in_31 <= 16'd0;
-            sys_data_in_41 <= 16'd0;
+            sys_start_1    <= 0;
+            sys_start_2    <= 0;
+            sys_start_3    <= 0;
+            sys_start_4    <= 0;
+            sys_switch_in  <= 0;
+
+            sys_weight_in_11 <= '0;
+            sys_weight_in_12 <= '0;
+            sys_weight_in_13 <= '0;
+            sys_weight_in_14 <= '0;
+            sys_data_in_11   <= '0;
+            sys_data_in_21   <= '0;
+            sys_data_in_31   <= '0;
+            sys_data_in_41   <= '0;
+
         end else begin
             // Defaults
             done <= 0;
+
             // Datapath control signals
             sys_accept_w_1 <= 0;
             sys_accept_w_2 <= 0;
             sys_accept_w_3 <= 0;
             sys_accept_w_4 <= 0;
-            sys_start_1 <= 0;
-            sys_start_2 <= 0;
-            sys_start_3 <= 0;
-            sys_start_4 <= 0;
-            sys_switch_in <= 0;
-            sys_weight_in_11 <= 16'd0;
-            sys_weight_in_12 <= 16'd0;
-            sys_weight_in_13 <= 16'd0;
-            sys_weight_in_14 <= 16'd0;
-            sys_data_in_11 <= 16'd0;
-            sys_data_in_21 <= 16'd0;
-            sys_data_in_31 <= 16'd0;
-            sys_data_in_41 <= 16'd0;
+            sys_start_1    <= 0;
+            sys_start_2    <= 0;
+            sys_start_3    <= 0;
+            sys_start_4    <= 0;
+            sys_switch_in  <= 0;
 
-            mem_req_addr <= '0;
-            mem_req_data <= '0;
-            mem_read_en <= 0;
-            mem_write_en <= 0;
+            sys_weight_in_11 <= '0;
+            sys_weight_in_12 <= '0;
+            sys_weight_in_13 <= '0;
+            sys_weight_in_14 <= '0;
+            sys_data_in_11   <= '0;
+            sys_data_in_21   <= '0;
+            sys_data_in_31   <= '0;
+            sys_data_in_41   <= '0;
 
-            case(state)
+            mem_req_addr  <= '0;
+            mem_req_data  <= '0;
+            mem_read_en   <= 0;
+            mem_write_en  <= 0;
+
+            case (state)
                 S_IDLE: begin
                     if (start) begin
-                        base_addr_x_reg <= base_addr_x;
-                        base_addr_w_reg <= base_addr_w;
+                        base_addr_x_reg   <= base_addr_x;
+                        base_addr_w_reg   <= base_addr_w;
                         base_addr_out_reg <= base_addr_out;
                         state <= S_LOAD_W_REQ;
                     end
@@ -229,9 +239,8 @@ module systolic_wrapper #(
 
                 S_LOAD_W_REQ: begin
                     mem_req_addr <= base_addr_w_reg + (load_idx * BYTES_PER_BEAT);
-                    mem_read_en <= 1;
-                    // Reset memory latency timer - 0 cycles since memory request
-                    mem_latency_timer <= '0;
+                    mem_read_en  <= 1;
+                    mem_latency_timer <= '0; // 0 cycles since memory request
                     state <= S_LOAD_W_WAIT;
                 end
 
@@ -239,7 +248,6 @@ module systolic_wrapper #(
                     if (mem_latency_timer >= (MEM_LATENCY - 1)) begin
                         // Timer is up - valid response from memory is ready
                         // Write response from memory to W matrix
-                        // Use for-loop to unpack response if BANKING_FACTOR > 1
                         for (int b = 0; b < BANKING_FACTOR; b++) begin
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
@@ -247,29 +255,22 @@ module systolic_wrapper #(
                                 weight_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
                             end
                         end
-                        // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.
-                        // first element in next block to request if BANKING_FACTOR > 1). If done with W matrix, zero out
-                        // load_idx and move on to X matrix.
+                        // Done with W?
                         if ((load_idx + 1) * BANKING_FACTOR >= TOTAL_ELEMS) begin
-                            // Next idx > N^2, so we have finished with the W matrix
-                            // Move on to request X
                             load_idx <= '0;
-                            state <= S_LOAD_X_REQ;
+                            state    <= S_LOAD_X_REQ;
                         end else begin
-                            // Move back to request W to request next weight block
                             load_idx <= load_idx + 1;
-                            state <= S_LOAD_W_REQ;
+                            state    <= S_LOAD_W_REQ;
                         end
                     end else begin
-                        // Timer not up - increment timer
                         mem_latency_timer <= mem_latency_timer + 1;
                     end
                 end
 
                 S_LOAD_X_REQ: begin
                     mem_req_addr <= base_addr_x_reg + (load_idx * BYTES_PER_BEAT);
-                    mem_read_en <= 1;
-                    // Reset memory latency timer - 0 cycles since memory request
+                    mem_read_en  <= 1;
                     mem_latency_timer <= '0;
                     state <= S_LOAD_X_WAIT;
                 end
@@ -277,8 +278,6 @@ module systolic_wrapper #(
                 S_LOAD_X_WAIT: begin
                     if (mem_latency_timer >= (MEM_LATENCY - 1)) begin
                         // Timer is up - valid response from memory is ready
-                        // Write response from memory to X matrix
-                        // Use for-loop to unpack response if BANKING_FACTOR > 1
                         for (int b = 0; b < BANKING_FACTOR; b++) begin
                             int flat_index;
                             flat_index = load_idx * BANKING_FACTOR + b;
@@ -286,26 +285,19 @@ module systolic_wrapper #(
                                 x_matrix[flat_index] <= mem_resp_data[b*DATA_WIDTH +: DATA_WIDTH];
                             end
                         end
-                        // Increment load_idx by banking factor to reflect matrix index of next element to request (i.e.
-                        // first element in next block to request if BANKING_FACTOR > 1). If done with X matrix,
-                        // move on to run (compute) state.
                         if ((load_idx + 1) * BANKING_FACTOR >= TOTAL_ELEMS) begin
-                            // Next idx > N^2, so we have finished with the X matrix
-                            // Move on to run state
-                            load_idx <= '0;
-                            phase_counter <= '0;
-                            state <= S_RUN;
+                            load_idx       <= '0;
+                            phase_counter  <= '0;
+                            state          <= S_RUN;
                         end else begin
-                            // Move back to request X to request next weight block
                             load_idx <= load_idx + 1;
-                            state <= S_LOAD_X_REQ;
+                            state    <= S_LOAD_X_REQ;
                         end
                     end else begin
-                        // Timer not up - increment timer
                         mem_latency_timer <= mem_latency_timer + 1;
                     end
                 end
-                
+
                 S_RUN: begin
                     // Increment phase counter
                     phase_counter <= phase_counter + 1;
@@ -358,7 +350,7 @@ module systolic_wrapper #(
                     // ---- Stop when weight and input sequences done ----
                     if (phase_counter >= 3*N - 2) begin
                         phase_counter <= '0;
-                        state <= S_CAPTURE;
+                        state         <= S_CAPTURE;
                     end
                 end
 
@@ -386,7 +378,6 @@ module systolic_wrapper #(
 
                     mem_write_en <= 1;
 
-                    // Reset memory latency timer - 0 cycles since memory request
                     mem_latency_timer <= '0;
                     state <= S_STORE_WAIT;
                 end
@@ -394,11 +385,10 @@ module systolic_wrapper #(
                 S_STORE_WAIT: begin
                     if (mem_latency_timer >= (MEM_LATENCY - 1)) begin
                         if ((load_idx + 1) * BANKING_FACTOR >= TOTAL_ELEMS) begin
-                            // Done writing all outputs
                             state <= S_DONE;
                         end else begin
                             load_idx <= load_idx + 1;
-                            state <= S_STORE_REQ;
+                            state    <= S_STORE_REQ;
                         end
                     end else begin
                         mem_latency_timer <= mem_latency_timer + 1;
@@ -406,7 +396,7 @@ module systolic_wrapper #(
                 end
 
                 S_DONE: begin
-                    done <= 1;
+                    done  <= 1;
                     state <= S_IDLE;
                 end
 
@@ -414,13 +404,12 @@ module systolic_wrapper #(
         end
     end
 
-    // DEBUGGING: uncomment if needed
-    // Break out the out matrix for waveform debugging
-    //generate
-    //for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
-    //    logic signed [DATA_WIDTH-1:0] out_elem;
-    //    assign out_elem = out_matrix[i];
-    //end
-    //endgenerate
+    // Temporary: Break out the out matrix for waveform debugging
+    generate
+    for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
+        logic [DATA_WIDTH-1:0] out_elem;
+        assign out_elem = out_matrix[i];
+    end
+    endgenerate
 
 endmodule
