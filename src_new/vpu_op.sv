@@ -14,16 +14,19 @@ module vpu_op #(
 localparam ADD = 4'd0;
 localparam SUB = 4'd1;
 localparam RELU = 4'd2;
+localparam MUL = 4'd3;
 
 // internal signalas for computation result storing
 logic [DATA_W-1:0] result;
 logic [DATA_W-1:0] adder_a, adder_b;
 logic [DATA_W-1:0] adder_result;
 logic [DATA_W-1:0] relu_result;
+logic [DATA_W-1:0] mul_a, mul_b;
+logic [DATA_W-1:0] mul_result;
 
 // fp32 adder instance ; this can be adjusted for fxp
 logic [DATA_W-1:0] operand1_neg;
-assign operand1_neg = ~operand1 + 1'b1;
+assign operand1_neg = {~operand1[DATA_W-1], operand1[DATA_W-2:0]};
 
 assign adder_a = operand0;
 assign adder_b = (opcode == SUB) ? operand1_neg : operand1;
@@ -31,6 +34,14 @@ parameterized_adder #(.FORMAT("FP32")) fp32_adder (
   .a(adder_a),
   .b(adder_b),
   .result(adder_result)
+);
+
+assign mul_a = operand0;
+assign mul_b = operand1;
+fp32_mul fp32_mul (
+  .a(mul_a),
+  .b(mul_b),
+  .result(mul_result)
 );
 
 // ReLU operation 
@@ -54,6 +65,9 @@ always_comb begin
       end
       RELU: begin
         result = relu_result;
+      end
+      MUL: begin
+        result = mul_result;
       end
       default: begin
         result = {DATA_W{1'b0}};

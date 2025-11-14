@@ -1,4 +1,4 @@
-# test_vpu/test_vpu_top.py
+# to run: python3 test_new/test_vpu_top.py
 import os
 import subprocess
 
