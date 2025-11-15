@@ -2,7 +2,7 @@
 `default_nettype none
 
 module systolic #(
-    parameter int N           = 16,
+    parameter int N           = 4,
     parameter int DATA_WIDTH  = 32
 )(
     input  logic clk,

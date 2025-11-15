@@ -1,9 +1,7 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.triggers import RisingEdge
 import struct
-
-# ---------- 16x16 test matrices ----------
 
 N = 16
 
@@ -13,12 +11,13 @@ X_16x16 = [
     for r in range(N)
 ]
 
+# 16x16 identity weight matrix
 W1_16x16 = [
     [1.0 if r == c else 0.0 for c in range(N)]
     for r in range(N)
 ]
 
-
+# Expected output is just X (since W = I)
 OUT_16x16 = X_16x16
 
 
@@ -37,6 +36,7 @@ async def test_systolic_array_16x16_fp32(dut):
       - sys_data_out[0..15], sys_valid_out[0..15]
       - sys_switch_in
     """
+    # ---------------- Clock ----------------
     clock = Clock(dut.clk, 10, units="ns")
     cocotb.start_soon(clock.start())
 
@@ -49,6 +49,8 @@ async def test_systolic_array_16x16_fp32(dut):
         dut.sys_accept_w[i].value = 0
 
     dut.sys_switch_in.value = 0
+
+    # Optional unified-buffer control, if present
     if hasattr(dut, "ub_rd_col_size_in"):
         dut.ub_rd_col_size_in.value = 0
     if hasattr(dut, "ub_rd_col_size_valid_in"):
@@ -58,17 +60,26 @@ async def test_systolic_array_16x16_fp32(dut):
     await RisingEdge(dut.clk)
     dut.rst.value = 0
 
+    # row_ptr[c] = how many outputs we’ve seen so far on column c
     row_ptr = [0] * N
 
-    max_cycles = (3 * N - 2) + N + 5  # run long enough to drain
+    # Run long enough to:
+    #  - load weights (~3N-2 cycles)
+    #  - feed X (N cycles)
+    #  - drain pipeline (~a few extra cycles)
+    max_cycles = (3 * N - 2) + N + 5
 
     for p in range(max_cycles):
+        # Clear per-cycle control
         for i in range(N):
             dut.sys_accept_w[i].value = 0
             dut.sys_start[i].value = 0
 
+        # Switch shadow -> active buffer once the weight pipe is full
         dut.sys_switch_in.value = 1 if p == (N - 1) else 0
 
+        # ---------------- WEIGHT LOAD SCHEDULE ----------------
+        # Same diagonal schedule pattern as 4x4/5x5, generalized to N.
         if p < (3 * N - 2):
             for c in range(N):
                 k = p - c
@@ -79,7 +90,11 @@ async def test_systolic_array_16x16_fp32(dut):
                     dut.sys_weight_in[c].value = float_to_fp32_bits(w_val)
                     dut.sys_accept_w[c].value = 1
 
-        for r in range(N): # row-dependent delay
+        # ---------------- X INPUT SCHEDULE ----------------
+        # Row-dependent phase delay: row r starts at time p = N + r
+        # and then feeds X[ph][r] where ph = p - (N + r).
+        for r in range(N):
+            ph = p - (N + r)  # <<< this was the missing line
             if 0 <= ph < N:
                 x_val = X_16x16[ph][r]
                 dut.sys_data_in[r].value = float_to_fp32_bits(x_val)
@@ -88,6 +103,7 @@ async def test_systolic_array_16x16_fp32(dut):
         # Advance one cycle
         await RisingEdge(dut.clk)
 
+        # ---------------- CHECK OUTPUTS ----------------
         for c in range(N):
             if int(dut.sys_valid_out[c].value) == 1:
                 assert row_ptr[c] < N, f"Too many outputs on column {c}"
@@ -104,6 +120,7 @@ async def test_systolic_array_16x16_fp32(dut):
                 )
                 row_ptr[c] += 1
 
+    # Make sure we saw all N outputs per column
     for c in range(N):
         assert row_ptr[c] == N, (
             f"Column {c}: expected {N} outputs, saw {row_ptr[c]}"
