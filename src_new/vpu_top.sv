@@ -130,6 +130,7 @@ always_ff @(posedge clk) begin
       c_val <= op_result;
     end
   end
+end
 
 logic vpu_op_start;
 logic [DATA_W-1:0] op_result;

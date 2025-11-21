@@ -1,423 +1,144 @@
-import os
-import subprocess
-
-def test_vpu_top():
-    """Test the VPU top module with memory interface signals"""
-
-    os.makedirs("build", exist_ok=True)
-
-    # Create testbench
-    testbench_code = """
-`timescale 1ns/1ps
-
-module test_vpu_top;
-    parameter DATA_W = 32;
-    parameter ADDR_W = 16;
-    parameter OP_W = 4;
-    parameter INST_ADDR = 5;
-    
-    // Clock and reset
-    reg clk;
-    reg rst;
-    
-    // VPU inputs
-    reg [31:0] inst;
-    reg mem_rdy;
-    reg mem_read_en;
-    reg mem_write_en;
-    
-    // VPU outputs
-    wire [ADDR_W-1:0] addr_a;
-    wire [ADDR_W-1:0] addr_b;
-    wire [ADDR_W-1:0] addr_c;
-    wire [DATA_W-1:0] data_c;
-    wire done;
-    
-    // Memory interface inputs
-    reg [DATA_W-1:0] data_a;
-    reg [DATA_W-1:0] data_b;
-    
-    // Test memory
-    reg [31:0] test_memory [0:31];
-    integer test_count;
-    integer error_count;
-    
-    // Instantiate DUT
-    vpu_top dut (
-        .clk(clk),
-        .rst(rst),
-        .inst(inst),
-        .mem_rdy(mem_rdy),
-        .mem_read_en(mem_read_en),
-        .mem_write_en(mem_write_en),
-        .addr_a(addr_a),
-        .addr_b(addr_b),
-        .addr_c(addr_c),
-        .data_a(data_a),
-        .data_b(data_b),
-        .data_c(data_c),
-        .done(done)
-    );
-    
-    // Clock generation
-    always #5 clk = ~clk;
-    
-    // Helper function to create instruction
-    function [31:0] create_instruction;
-        input [INST_ADDR-1:0] a_addr;
-        input [INST_ADDR-1:0] b_addr;
-        input [INST_ADDR-1:0] c_addr;
-        input [INST_ADDR-1:0] const_addr;
-        input [OP_W-1:0] opcode;
-        begin
-            create_instruction = {8'h00, const_addr, c_addr, b_addr, a_addr, opcode};
-            //        reserved|const| c   |  b   |  a   |opcode
-            // bits:    8     |  5  |  5  |  5   |  5   |  4
-        end
-    endfunction
-    
-    // Helper function to print state
-    function string get_state_name;
-        input [2:0] state;
-        case (state)
-            3'd0: get_state_name = "IDLE      ";
-            3'd1: get_state_name = "DATA_A    ";
-            3'd2: get_state_name = "DATA_B    ";
-            3'd3: get_state_name = "DATA_CONST";
-            3'd4: get_state_name = "PROCESSING";
-            3'd5: get_state_name = "DATA_C    ";
-            default: get_state_name = "UNKNOWN  ";
-        endcase
-    endfunction
-    
-    // Memory response task
-    task memory_response;
-      begin
-          mem_read_en = 1'b0;
-          mem_write_en = 1'b0;
-          data_a = 32'h0;
-          data_b = 32'h0;
-          
-          case (dut.current_state)
-              dut.DATA_A: begin
-                  if (addr_a < 32) begin
-                      data_a = test_memory[addr_a];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read A: addr=%0d, data=0x%08x", addr_a, data_a);
-                  end
-              end
-              dut.DATA_B: begin
-                  if (addr_b < 32) begin
-                      data_b = test_memory[addr_b];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read B: addr=%0d, data=0x%08x", addr_b, data_b);
-                  end
-              end
-              dut.DATA_CONST: begin
-                  if (addr_b < 32) begin
-                      data_b = test_memory[addr_b];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read CONST: addr=%0d, data=0x%08x", addr_b, data_b);
-                  end
-              end
-              dut.DATA_C: begin
-                  if (addr_c < 32) begin
-                      test_memory[addr_c] = data_c;
-                      mem_write_en = 1'b1;
-                      $display("  Memory Write C: addr=%0d, data=0x%08x", addr_c, data_c);
-                  end
-              end
-          endcase
-      end
-  endtask
-      
-    // Test task
-    task test_instruction;
-        input [31:0] instruction;
-        input [DATA_W-1:0] expected_result;
-        input string test_name;
-        input [INST_ADDR-1:0] result_addr;
-        integer cycles;
-        begin
-            cycles = 0;
-            
-            $display("=== Test %0d: %s ===", test_count, test_name);
-            $display("Instruction: 0x%08x", instruction);
-            $display("Time | State       | Addr_A | Addr_B | Addr_C | Data_C  | Done | MemRdy | MemRE | MemWE");
-            $display("-----|-------------|--------|--------|--------|---------|------|--------|-------|------");
-            
-            // Apply instruction
-            @(posedge clk);
-            inst = instruction;
-            mem_rdy = 1'b1;
-            
-            // Wait for completion
-            while (!done && cycles < 20) begin
-                memory_response();
-                @(posedge clk);
-                
-                $display("%4d | %s | %6d | %6d | %6d | %8x | %4b | %6b | %5b | %5b",
-                         $time, get_state_name(dut.current_state), 
-                         addr_a, addr_b, addr_c, data_c, done,
-                         mem_rdy, mem_read_en, mem_write_en);
-                
-                cycles = cycles + 1;
-            end
-            
-            if (cycles >= 20) begin
-                $display("ERROR: Timeout");
-                error_count = error_count + 1;
-            end else begin
-                // Check result
-                if (test_memory[result_addr] === expected_result) begin
-                    $display("PASS: Result 0x%08x", test_memory[result_addr]);
-                end else begin
-                    $display("FAIL: Got 0x%08x, expected 0x%08x", 
-                             test_memory[result_addr], expected_result);
-                    error_count = error_count + 1;
-                end
-                $display("Completed in %0d cycles", cycles);
-            end
-            
-            test_count = test_count + 1;
-            
-            // Wait between tests
-            mem_rdy = 1'b0;
-            @(posedge clk);
-            @(posedge clk);
-        end
-    endtask
-    
-    initial begin
-        // Initialize
-        clk = 0;
-        rst = 1;
-        inst = 32'h0;
-        mem_rdy = 1'b0;
-        mem_read_en = 1'b0;
-        mem_write_en = 1'b0;
-        data_a = 32'h0;
-        data_b = 32'h0;
-        test_count = 1;
-        error_count = 0;
-        
-        // Initialize test memory
-        for (integer i = 0; i < 32; i = i + 1) begin
-            test_memory[i] = 32'h0;
-        end
-        
-        // Load test data
-        test_memory[1] = 32'h0000000A;  // 10
-        test_memory[2] = 32'h00000014;  // 20  
-        test_memory[3] = 32'h00000005;  // 5
-        test_memory[4] = 32'hFFFFFFF6;  // -10
-        test_memory[5] = 32'h00000003;  // constant 3
-        
-        $display("Starting VPU Tests with Memory Interface");
-        $display("========================================");
-        
-        // Reset
-        #20;
-        rst = 0;
-        #20;
-        
-        @(posedge clk);
-        
-        // Test 1: ADD 10 + 20 = 30
-        test_instruction(
-            create_instruction(1, 2, 10, 5, 4'd0),  // ADD with constant
-            32'h0000001E,  // 30
-            "ADD: 10 + 20 = 30",
-            10
-        );
-        
-        // Test 2: SUB 20 - 10 = 10  
-        test_instruction(
-            create_instruction(2, 1, 11, 5, 4'd1),  // SUB with constant
-            32'h0000000A,  // 10
-            "SUB: 20 - 10 = 10",
-            11
-        );
-        
-        // Test 3: ADD 10 + 5 = 15
-        test_instruction(
-            create_instruction(1, 3, 12, 5, 4'd0),  // ADD with constant
-            32'h0000000F,  // 15
-            "ADD: 10 + 5 = 15", 
-            12
-        );
-        
-        // Test 4: RELU(10) = 10
-        test_instruction(
-            create_instruction(1, 0, 13, 5, 4'd2),  // RELU with constant
-            32'h0000000A,  // 10
-            "RELU: RELU(10) = 10",
-            13
-        );
-        
-        // Test 5: RELU(-10) = 0
-        test_instruction(
-            create_instruction(4, 0, 14, 5, 4'd2),  // RELU with constant
-            32'h00000000,  // 0
-            "RELU: RELU(-10) = 0",
-            14
-        );
-        
-        // Summary
-        $display("=== TEST SUMMARY ===");
-        $display("Total Tests: %0d", test_count - 1);
-        $display("Errors: %0d", error_count);
-        
-        if (error_count == 0) begin
-            $display("SUCCESS: All tests passed!");
-        end else begin
-            $display("FAILURE: %0d tests failed", error_count);
-        end
-        
-        $finish;
-    end
-    
-    // Monitor internal signals
-    always @(posedge clk) begin
-        if (!rst && dut.vpu_op_start) begin
-            $display("  Operation Start: A=0x%08x, B=0x%08x, Op=%0d", 
-                     dut.a_val, dut.b_val, dut.opcode);
-        end
-    end
-    
-    // Timeout
-    initial begin
-        #100000;
-        $display("ERROR: Simulation timeout");
-        $finish;
-    end
-    
-endmodule
-"""
-
-    # Write testbench
-    with open("build/test_vpu_top.sv", "w") as f:
-        f.write(testbench_code)
-
-    print("Testbench written to build/test_vpu_top.sv")
-
-    # Collect source files
-    source_files = []
-
-    # vpu_top
-    vpu_top_paths = ["src_new/vpu_top.sv"]
-    vpu_top_found = False
-    for path in vpu_top_paths:
-        if os.path.exists(path):
-            source_files.append(path)
-            vpu_top_found = True
-            print(f"Found vpu_top.sv at: {path}")
-            break
-    if not vpu_top_found:
-        print("ERROR: Could not find vpu_top.sv file")
-        for path in vpu_top_paths:
-            print(f"  - {path}")
-        return False
-
-    # vpu_op
-    vpu_op_paths = ["src_new/vpu_op.sv"]
-    vpu_op_found = False
-    for path in vpu_op_paths:
-        if os.path.exists(path):
-            source_files.append(path)
-            vpu_op_found = True
-            print(f"Found vpu_op.sv at: {path}")
-            break
-    if not vpu_op_found:
-        print("ERROR: Could not find vpu_op.sv file")
-        for path in vpu_op_paths:
-            print(f"  - {path}")
-        return False
-
-    # parameterized_adder (fp_adder.sv) or fallback
-    adder_paths = ["src_new/fp_adder.sv"]
-    adder_found = False
-    for path in adder_paths:
-        if os.path.exists(path):
-            source_files.append(path)
-            adder_found = True
-            print(f"Found parameterized_adder.sv at: {path}")
-            break
-
-    if not adder_found:
-        print("Creating simple parameterized_adder for simulation...")
-        parameterized_adder_code = """
 module parameterized_adder #(
-    parameter FORMAT = "FP32"
-)(
-    input  logic [31:0] a,
-    input  logic [31:0] b,
-    output logic [31:0] result
+    parameter FORMAT = "FP32", 
+    parameter INT_BITS = 16,
+    parameter FRAC_BITS = 16,
+    parameter WIDTH = 32
+    ) (
+    input  logic [WIDTH-1:0] a, b,
+    output logic [WIDTH-1:0] result
 );
-// Simple integer adder for simulation
-assign result = $signed(a) + $signed(b);
+
+logic a_sign, b_sign, result_sign;
+logic [7:0] a_exp, b_exp, larger_exp, exp_diff, result_exp;
+logic [22:0] a_mant, b_mant;
+logic [23:0] a_mant_ext, b_mant_ext;
+logic [24:0] sum_mant;
+
+logic a_nan, b_nan, a_inf, b_inf, a_zero, b_zero;
+logic normalize_done;
+integer i;
+
+generate
+    if (FORMAT == "FP32") begin : fp32_mode
+        assign a_sign = a[31];
+        assign a_exp  = a[30:23];
+        assign a_mant = a[22:0];
+        
+        assign b_sign = b[31];
+        assign b_exp  = b[30:23];
+        assign b_mant = b[22:0];
+        
+        assign a_nan  = (a_exp == 8'hFF) && (a_mant != 0);
+        assign b_nan  = (b_exp == 8'hFF) && (b_mant != 0);
+        assign a_inf  = (a_exp == 8'hFF) && (a_mant == 0);
+        assign b_inf  = (b_exp == 8'hFF) && (b_mant == 0);
+        assign a_zero = (a_exp == 8'h00) && (a_mant == 0);
+        assign b_zero = (b_exp == 8'h00) && (b_mant == 0);
+        
+        always_comb begin
+            if (a_nan || b_nan) begin
+                result = 32'h7FC00000;  // NaN
+            end
+            else if (a_inf && b_inf) begin
+                result = (a_sign == b_sign) ? {a_sign, 8'hFF, 23'h0} : 32'h7FC00000;
+            end
+            else if (a_inf) begin
+                result = {a_sign, 8'hFF, 23'h0};
+            end
+            else if (b_inf) begin
+                result = {b_sign, 8'hFF, 23'h0};
+            end
+            else if (a_zero && b_zero) begin
+                result = {a_sign & b_sign, 8'h00, 23'h0}; 
+            end
+            else if (a_zero) begin
+                result = b;
+            end
+            else if (b_zero) begin
+                result = a;
+            end
+            else begin
+                // fp32 addition logic
+                a_mant_ext = (a_exp == 8'h00) ? {1'b0, a_mant} : {1'b1, a_mant};
+                b_mant_ext = (b_exp == 8'h00) ? {1'b0, b_mant} : {1'b1, b_mant};
+                
+                // align exponents
+                if (a_exp >= b_exp) begin
+                    larger_exp = a_exp;
+                    exp_diff = a_exp - b_exp;
+                    b_mant_ext = b_mant_ext >> exp_diff;
+                end else begin
+                    larger_exp = b_exp;
+                    exp_diff = b_exp - a_exp;
+                    a_mant_ext = a_mant_ext >> exp_diff;
+                end
+                
+                // add/sub mantissas
+                if (a_sign == b_sign) begin
+                    sum_mant = a_mant_ext + b_mant_ext;
+                    result_sign = a_sign;
+                end else begin
+                    if (a_mant_ext >= b_mant_ext) begin
+                        sum_mant = a_mant_ext - b_mant_ext;
+                        result_sign = a_sign;
+                    end else begin
+                        sum_mant = b_mant_ext - a_mant_ext;
+                        result_sign = b_sign;
+                    end
+                end
+                
+                result_exp = larger_exp;
+                normalize_done = 1'b0;
+                
+                if (sum_mant[24]) begin
+                    sum_mant = sum_mant >> 1;
+                    result_exp = result_exp + 1;
+                    normalize_done = 1'b1;
+                end 
+                else if (sum_mant[23]) begin
+                    normalize_done = 1'b1;
+                end
+                
+                if (!normalize_done) begin
+                    for (i = 22; i >= 0; i = i - 1) begin
+                        if (sum_mant[i] && !normalize_done) begin
+                            sum_mant = sum_mant << (23 - i);
+                            result_exp = result_exp - (23 - i);
+                            normalize_done = 1'b1;
+                        end
+                    end
+                end
+                
+                if (sum_mant == 0) begin
+                    result = 32'h00000000;
+                end
+                else if (result_exp >= 8'hFF) begin
+                    result = {result_sign, 8'hFF, 23'h0}; 
+                end 
+                else if (result_exp == 8'h00) begin
+                    result = {result_sign, 8'h00, 23'h0};
+                end 
+                else begin
+                    result = {result_sign, result_exp, sum_mant[22:0]};
+                end
+            end
+        end
+    end 
+    else begin : fixed_point_mode
+        logic [WIDTH-1:0] sum;
+        logic overflow;
+        
+        assign sum = a + b;
+        assign overflow = (a[WIDTH-1] == b[WIDTH-1]) && (sum[WIDTH-1] != a[WIDTH-1]);
+        
+        always_comb begin
+            if (overflow) begin
+                result = a[WIDTH-1] ? {1'b1, {WIDTH-1{1'b0}}} : {1'b0, {WIDTH-1{1'b1}}};
+            end else begin
+                result = sum;
+            end
+        end
+    end
+endgenerate
+
 endmodule
-"""
-        with open("build/parameterized_adder.sv", "w") as f:
-            f.write(parameterized_adder_code)
-        source_files.append("build/parameterized_adder.sv")
-
-    # parameterized_mul (fp_mul.sv) or fallback
-    mul_paths = ["src_new/fp_mul.sv"]
-    mul_found = False
-    for path in mul_paths:
-        if os.path.exists(path):
-            source_files.append(path)
-            mul_found = True
-            print(f"Found parameterized_mul.sv at: {path}")
-            break
-
-    if not mul_found:
-        print("Creating simple parameterized_mul for simulation...")
-        parameterized_mul_code = """
-module parameterized_mul #(
-    parameter FORMAT = "FP32"
-)(
-    input  [31:0] a,
-    input  [31:0] b,
-    output [31:0] result
-);
-// Simple integer multiplier for simulation
-assign result = $signed(a) * $signed(b);
-endmodule
-"""
-        with open("build/parameterized_mul.sv", "w") as f:
-            f.write(parameterized_mul_code)
-        source_files.append("build/parameterized_mul.sv")
-
-    # Compile and run
-    print("Compiling...")
-    compile_cmd = ["iverilog", "-o", "build/test_vpu_top", "-g2012", "build/test_vpu_top.sv"] + source_files
-    result = subprocess.run(compile_cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        print("COMPILATION FAILED:")
-        print(result.stderr)
-        return False
-
-    print("Running simulation...")
-    result = subprocess.run(["vvp", "build/test_vpu_top"], capture_output=True, text=True)
-
-    print("=== SIMULATION OUTPUT ===")
-    print(result.stdout)
-
-    if result.stderr:
-        print("=== ERRORS ===")
-        print(result.stderr)
-
-    success = "SUCCESS: All tests passed!" in result.stdout
-    if success:
-        print("VPU top module is working correctly!")
-    else:
-        print("VPU top module has issues")
-
-    return success
-
-
-if __name__ == "__main__":
-    test_vpu_top()
