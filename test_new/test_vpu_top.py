@@ -13,7 +13,7 @@ def test_vpu_top():
 
 module test_vpu_top;
     parameter DATA_W = 32;
-    parameter ADDR_W = 16;
+    parameter ADDR_W = 13;
     parameter OP_W = 4;
     parameter INST_ADDR = 5;
     

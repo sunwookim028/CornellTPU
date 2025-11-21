@@ -378,6 +378,24 @@ endmodule
         with open("build/parameterized_adder.sv", "w") as f:
             f.write(parameterized_adder_code)
         source_files.append("build/parameterized_adder.sv")
+
+    mul_paths = [
+        "src_new/fp_mul.sv", 
+    ]
+    
+    mul_found = False
+    for path in mul_paths:
+        if os.path.exists(path):
+            source_files.append(path)
+            mul_found = True
+            print(f"Found parameterized_mul.sv at: {path}")
+            break
+    if not mul_found:
+        print("ERROR: Could not find vpu_op.sv file")
+        print("Please ensure vpu_op.sv is in one of these locations:")
+        for path in vpu_op_paths:
+            print(f"  - {path}")
+        return False
     
     # Compile and run
     print("Compiling...")
