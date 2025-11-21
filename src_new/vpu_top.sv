@@ -131,7 +131,6 @@ always_ff @(posedge clk) begin
       c_val <= op_result;
     end
   end
-end
 
 logic vpu_op_start;
 logic [DATA_W-1:0] op_result;
@@ -145,7 +144,7 @@ always_comb begin
   addr_b = '0;
   addr_c = '0;
   data_c = c_val; 
-  mem_cnt_en = 1'b0
+  mem_cnt_en = 1'b0;
   comp_done = 1'b0;
   
   case (current_state)

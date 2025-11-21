@@ -1,4 +1,4 @@
-module parameterized_mul#(
+module parameterized_mul #(
   parameter FORMAT = "FP32",
   parameter INT_BITS = 16,
   parameter FRAC_BITS = 16,
