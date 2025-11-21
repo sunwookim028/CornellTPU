@@ -179,84 +179,80 @@ def backward_pass(W, X, b, Z, dA, m=4):
   dX = np.zeros_like(X)
   dX = (W.T @ dZ).astype(np.float32)
   for i in range(m):  # rows of dX
-        for j in range(m):  # columns of dX  
-            temp_sum_addr = 0xF200 + i*m + j
-            
-            # Sum over k: W[k,i] * dZ[k,j]
-            for k in range(m):
-                # W[k,i] is at address: W_addr + k*m*4 + i*4
-                w_element_addr = W_addr + k*m*4 + i*4
-                # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
-                dz_element_addr = dZ_addr + k*m*4 + j*4
-                product_addr = 0xF300 + k
-                
-                log_instruction("mul", hex(w_element_addr), hex(dz_element_addr), hex(product_addr))
-                log_instruction("add", hex(temp_sum_addr), hex(product_addr), hex(temp_sum_addr))
-            
-            # store result in dX[i,j]
-            dX_element_addr = dX_addr + i*m*4 + j*4
-            log_instruction("mov", hex(temp_sum_addr), hex(dX_element_addr))
+    for j in range(m):  # columns of dX  
+      temp_sum_addr = 0xF200 + i*m + j
+
+      for k in range(m):
+          # W[k,i] is at address: W_addr + k*m*4 + i*4
+          w_element_addr = W_addr + k*m*4 + i*4
+          # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
+          dz_element_addr = dZ_addr + k*m*4 + j*4
+          product_addr = 0xF300 + k
+          
+          log_instruction("mul", hex(w_element_addr), hex(dz_element_addr), hex(product_addr))
+          log_instruction("add", hex(temp_sum_addr), hex(product_addr), hex(temp_sum_addr))
+      
+      # store result in dX[i,j]
+      dX_element_addr = dX_addr + i*m*4 + j*4
+      log_instruction("mov", hex(temp_sum_addr), hex(dX_element_addr))
   
   return dW.astype(np.float32), db.astype(np.float32), dX.astype(np.float32)
 
 def save_instructions(filename="mlp_instructions.txt"):
-    with open(filename, 'w') as f:
-        for instruction in instruction_log:
-            f.write(instruction + '\n')
-    print(f"Saved {len(instruction_log)} instructions to {filename}")
+  with open(filename, 'w') as f:
+      for instruction in instruction_log:
+          f.write(instruction + '\n')
+  print(f"Saved {len(instruction_log)} instructions to {filename}")
 
 def reset_instruction_log():
-    global instruction_log
-    instruction_log = []
+  global instruction_log
+  instruction_log = []
 
 def run_complete_mlp_example():
-    """Run a complete forward and backward pass with instruction logging"""
-    
-    # Reset the instruction log
-    global instruction_log
-    instruction_log = []
-    
-    print("=== Starting Complete MLP Example ===")
-    m = 4
-    
-    # Initialize random data (replace with your actual data)
-    W = np.random.randn(m, m).astype(np.float32)  # weights
-    X = np.random.randn(m, m).astype(np.float32)  # input batch  
-    b = np.random.randn(m, 1).astype(np.float32)  # bias
-    Y_prime = np.random.randn(m, m).astype(np.float32)  # target output
-    
-    print("Data initialized:")
-    print(f"W shape: {W.shape}")
-    print(f"X shape: {X.shape}") 
-    print(f"b shape: {b.shape}")
-    print(f"Y_prime shape: {Y_prime.shape}")
-    
-    # 1. FORWARD PASS
-    print("\n--- Running Forward Pass ---")
-    Z, A = forward_pass(W, X, b, m)
-    print(f"Forward pass completed. Z shape: {Z.shape}, A shape: {A.shape}")
-    
-    # 2. LOSS COMPUTATION
-    print("\n--- Computing Loss ---")
-    loss_value, dA = loss(A, Y_prime, m)
-    print(f"Loss: {loss_value:.6f}")
-    print(f"dA shape: {dA.shape}")
-    
-    # 3. BACKWARD PASS
-    print("\n--- Running Backward Pass ---")
-    dW, db, dX = backward_pass(W, X, b, Z, dA, m)
-    print(f"Backward pass completed.")
-    print(f"dW shape: {dW.shape}")
-    print(f"db shape: {db.shape}") 
-    print(f"dX shape: {dX.shape}")
-    
-    # 4. SAVE INSTRUCTIONS
-    print("\n--- Saving Instructions ---")
-    save_instructions("mlp_instruction_trace.txt")
-    
-    print(f"\n=== Complete! Generated {len(instruction_log)} instructions ===")
-    
-    return loss_value, dW, db, dX
+  global instruction_log
+  instruction_log = []
+  
+  m = 4
+  
+  W = np.random.randn(m, m).astype(np.float32)  
+  X = np.random.randn(m, m).astype(np.float32)  
+  b = np.random.randn(m, 1).astype(np.float32) 
+  Y_prime = np.random.randn(m, m).astype(np.float32)  
+
+  print(f"\n=== Generating MLP instructions ===")
+  
+  print("\n--- Initial data ---")
+  print(f"W shape: {W.shape}")
+  print(f"X shape: {X.shape}") 
+  print(f"b shape: {b.shape}")
+  print(f"Y_prime shape: {Y_prime.shape}")
+  
+  # forward pass
+  print("\n--- Running Forward Pass ---")
+  Z, A = forward_pass(W, X, b, m)
+  print(f"Forward pass completed. Z shape: {Z.shape}, A shape: {A.shape}")
+  
+  # loss computation
+  print("\n--- Computing Loss ---")
+  loss_value, dA = loss(A, Y_prime, m)
+  print(f"Loss: {loss_value:.6f}")
+  print(f"dA shape: {dA.shape}")
+  
+  # backward pass
+  print("\n--- Running Backward Pass ---")
+  dW, db, dX = backward_pass(W, X, b, Z, dA, m)
+  print(f"Backward pass completed.")
+  print(f"dW shape: {dW.shape}")
+  print(f"db shape: {db.shape}") 
+  print(f"dX shape: {dX.shape}")
+  
+  # log instructions in txt file
+  print("\n--- Saving Instructions ---")
+  save_instructions("mlp_instruction_trace.txt")
+  
+  print(f"\n=== Complete! Generated {len(instruction_log)} instructions ===")
+  
+  return loss_value, dW, db, dX
 
 if __name__ == "__main__":
-    loss_val, dW, db, dX = run_complete_mlp_example()
+  loss_val, dW, db, dX = run_complete_mlp_example()
