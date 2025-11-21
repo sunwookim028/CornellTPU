@@ -5,7 +5,7 @@ module top_systolic_test;
 
     localparam int N = 4;
     localparam int DATA_WIDTH = 16;
-    localparam int BANKING_FACTOR = 1;
+    localparam int BANKING_FACTOR = 4;
     localparam int ADDRESS_WIDTH = 13;
     localparam int MEM_LATENCY = 3;
 
@@ -24,8 +24,14 @@ module top_systolic_test;
     logic mem_read_en;
     logic mem_write_en;
 
-    logic start;
-    logic done;
+    logic start_load;
+    logic done_load;
+
+    logic start_compute;
+    logic done_compute;
+
+    logic start_store;
+    logic done_store;
 
     logic [ADDRESS_WIDTH-1:0] base_addr_w;
     logic [ADDRESS_WIDTH-1:0] base_addr_x;
@@ -45,8 +51,12 @@ module top_systolic_test;
     ) wrapper_inst (
         .clk(clk),
         .rst(rst),
-        .start(start),
-        .done(done),
+        .start_load(start_load),
+        .done_load(done_load),
+        .start_compute(start_compute),
+        .done_compute(done_compute),
+        .start_store(start_store),
+        .done_store(done_store),
         .base_addr_w(base_addr_w),
         .base_addr_x(base_addr_x),
         .base_addr_out(base_addr_out),

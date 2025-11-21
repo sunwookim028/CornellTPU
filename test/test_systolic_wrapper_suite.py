@@ -18,10 +18,13 @@ def from_fixed(val, frac_bits=8):
 
 async def run_single_test(dut, W, X, test_name):
     N = 4
+    results = []
 
     # Reset
     dut.rst.value = 1
-    dut.start.value = 0
+    dut.start_load.value = 0
+    dut.start_compute.value = 0
+    dut.start_store.value = 0
     await Timer(20, units="ns")
     dut.rst.value = 0
     await RisingEdge(dut.clk)
@@ -39,38 +42,56 @@ async def run_single_test(dut, W, X, test_name):
     for i, val in enumerate(X_fixed):
         dut.mem_inst.x_matrix[i].value = val
 
-    dut._log.info(f"[{test_name}] Memory initialized.")
+    # Run matmul by giving DUT start signals for each of the 3 stages
 
-    # Start DUT
-    dut.start.value = 1
+    # First load
+    dut.start_load.value = 1
     await RisingEdge(dut.clk)
-    dut.start.value = 0
-
-    # Wait for done
-    for _ in range(2000):
+    dut.start_load.value = 0
+    for _ in range(800):
         await RisingEdge(dut.clk)
-        if int(dut.done.value) == 1:
+        if int(dut.done_load.value) == 1:
             break
     else:
-        assert False, f"[{test_name}] TIMEOUT waiting for done"
-
-    # Extra settling cycles
+        assert False, f"[{test_name}] TIMEOUT in load"
+    
+    # Now compute
+    dut.start_compute.value = 1
     await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
+    dut.start_compute.value = 0
+    for _ in range(800):
+        await RisingEdge(dut.clk)
+        if int(dut.done_compute.value) == 1:
+            break
+    else:
+        assert False, f"[{test_name}] TIMEOUT in compute"
 
-    # Read outputs
-    results = []
-    for idx, x in enumerate(dut.wrapper_inst.out_matrix):
-        bv = x.value
-        if 'x' in bv.binstr.lower():
-            assert False, f"[{test_name}] X detected in output at index {idx}"
-        results.append(from_fixed(int(bv.signed_integer)))
+    # Finally, store
+    dut.start_store.value = 1
+    await RisingEdge(dut.clk)
+    dut.start_store.value = 0
+    for _ in range(800):
+        await RisingEdge(dut.clk)
+
+        # Capture write requests to mem
+        if int(dut.mem_write_en.value) == 1:
+            for i in range(int(dut.BANKING_FACTOR.value)):
+                # We have to get creative w/ how we index the mem req data since
+                # the earlier entries live at the higher indices in the output stream
+                j = dut.BANKING_FACTOR.value - (i+1)
+                results.append(from_fixed(int(dut.mem_req_data.value[16*j:(16*(j+1) - 1)].signed_integer)))
+
+        if int(dut.done_store.value) == 1:
+            break
+    else:
+        assert False, f"[{test_name}] TIMEOUT in store"
+
 
     # Reshape results
     out_grid = np.array(results).reshape(N, N)
 
-    # Expected output (your rotated convention)
-    expected = np.flipud(np.fliplr(X @ W.T))
+    # Expected output
+    expected = X @ W.T
 
     # Compare with tolerance
     tol = 1e-1
@@ -78,7 +99,7 @@ async def run_single_test(dut, W, X, test_name):
         assert abs(o - e) <= tol, \
             f"[{test_name}] MISMATCH at {idx}: got {o}, expected {e}"
 
-    dut._log.info(f"[{test_name}] PASS")
+    dut._log.info(f"Test case [{test_name}] PASSED!")
 
 
 @cocotb.test()
@@ -90,5 +111,5 @@ async def test_systolic_wrapper_suite(dut):
         W = case["W"]
         X = case["X"]
 
-        dut._log.info(f"--- Running test case: {name} ---")
+        #dut._log.info(f"--- Running test case: {name} ---")
         await run_single_test(dut, W, X, name)

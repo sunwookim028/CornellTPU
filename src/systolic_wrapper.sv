@@ -12,8 +12,15 @@ module systolic_wrapper #(
     input  logic rst,
 
     // To/from control:
-    input  logic start,
-    output logic done,
+    input  logic start_load,
+    output logic done_load,
+    
+    input  logic start_compute,
+    output logic done_compute,
+
+    input  logic start_store,
+    output logic done_store,
+
 
     input logic [ADDRESS_WIDTH-1:0] base_addr_w,
     input logic [ADDRESS_WIDTH-1:0] base_addr_x,
@@ -104,16 +111,18 @@ module systolic_wrapper #(
     );
 
     typedef enum logic [3:0] {
-        S_IDLE,
-        S_LOAD_W_REQ,
-        S_LOAD_W_WAIT,
-        S_LOAD_X_REQ,
-        S_LOAD_X_WAIT,
-        S_RUN,
-        S_CAPTURE,
+        S_IDLE, // Idle; wait for start_load signal
+        S_LOAD_W_REQ, // Send a request to mem for w element(s)
+        S_LOAD_W_WAIT, // Wait for mem response -> write to local buffer
+        S_LOAD_X_REQ, // Send a request to mem for x element(s)
+        S_LOAD_X_WAIT, // Wait for mem response -> write to local buffer
+        S_DONE_LOAD, // Done loading arrays. Wait for start_compute signal
+        S_RUN, // Stagger and input factor matrices; start collecting outputs
+        S_CAPTURE, // No more elements to input. Collect rest of outputs
+        S_DONE_COMPUTE, // Done with computation. Wait for start_store signal.
         S_STORE_REQ,
         S_STORE_WAIT,
-        S_DONE
+        S_DONE // Done with storing results. Pulse done_store status signal.
     } state_t;
 
     state_t state;
@@ -165,7 +174,9 @@ module systolic_wrapper #(
 
             load_idx <= 0;
 
-            done <= 0;
+            done_load <= 0;
+            done_compute <= 0;
+            done_store <= 0;
 
             // Reset latched base addresses
             base_addr_x_reg <= '0;
@@ -182,17 +193,28 @@ module systolic_wrapper #(
             sys_start_3 <= 0;
             sys_start_4 <= 0;
             sys_switch_in <= 0;
-            sys_weight_in_11 <= 16'd0;
-            sys_weight_in_12 <= 16'd0;
-            sys_weight_in_13 <= 16'd0;
-            sys_weight_in_14 <= 16'd0;
-            sys_data_in_11 <= 16'd0;
-            sys_data_in_21 <= 16'd0;
-            sys_data_in_31 <= 16'd0;
-            sys_data_in_41 <= 16'd0;
+            sys_weight_in_11 <= '0;
+            sys_weight_in_12 <= '0;
+            sys_weight_in_13 <= '0;
+            sys_weight_in_14 <= '0;
+            sys_data_in_11 <= '0;
+            sys_data_in_21 <= '0;
+            sys_data_in_31 <= '0;
+            sys_data_in_41 <= '0;
+
+            // Reset local matrix buffers
+            for (int k = 0; k < N*N; k++) begin
+                x_matrix[k] <= '0;
+                weight_matrix[k] <= '0;
+                out_matrix[k] <= '0;
+            end
+
         end else begin
             // Defaults
-            done <= 0;
+            done_load <= 0;
+            done_compute <= 0;
+            done_store <= 0;
+
             // Datapath control signals
             sys_accept_w_1 <= 0;
             sys_accept_w_2 <= 0;
@@ -203,14 +225,14 @@ module systolic_wrapper #(
             sys_start_3 <= 0;
             sys_start_4 <= 0;
             sys_switch_in <= 0;
-            sys_weight_in_11 <= 16'd0;
-            sys_weight_in_12 <= 16'd0;
-            sys_weight_in_13 <= 16'd0;
-            sys_weight_in_14 <= 16'd0;
-            sys_data_in_11 <= 16'd0;
-            sys_data_in_21 <= 16'd0;
-            sys_data_in_31 <= 16'd0;
-            sys_data_in_41 <= 16'd0;
+            sys_weight_in_11 <= '0;
+            sys_weight_in_12 <= '0;
+            sys_weight_in_13 <= '0;
+            sys_weight_in_14 <= '0;
+            sys_data_in_11 <= '0;
+            sys_data_in_21 <= '0;
+            sys_data_in_31 <= '0;
+            sys_data_in_41 <= '0;
 
             mem_req_addr <= '0;
             mem_req_data <= '0;
@@ -219,7 +241,7 @@ module systolic_wrapper #(
 
             case(state)
                 S_IDLE: begin
-                    if (start) begin
+                    if (start_load) begin
                         base_addr_x_reg <= base_addr_x;
                         base_addr_w_reg <= base_addr_w;
                         base_addr_out_reg <= base_addr_out;
@@ -291,10 +313,10 @@ module systolic_wrapper #(
                         // move on to run (compute) state.
                         if ((load_idx + 1) * BANKING_FACTOR >= TOTAL_ELEMS) begin
                             // Next idx > N^2, so we have finished with the X matrix
-                            // Move on to run state
+                            // Move on to next state
                             load_idx <= '0;
                             phase_counter <= '0;
-                            state <= S_RUN;
+                            state <= S_DONE_LOAD;
                         end else begin
                             // Move back to request X to request next weight block
                             load_idx <= load_idx + 1;
@@ -303,6 +325,13 @@ module systolic_wrapper #(
                     end else begin
                         // Timer not up - increment timer
                         mem_latency_timer <= mem_latency_timer + 1;
+                    end
+                end
+
+                S_DONE_LOAD: begin
+                    done_load <= 1'b1;
+                    if (start_compute) begin
+                        state <= S_RUN;
                     end
                 end
                 
@@ -335,7 +364,7 @@ module systolic_wrapper #(
                         sys_accept_w_4   <= 1;
                     end else sys_accept_w_4 <= 0;
 
-                    // Switch X input when last weight of column 1 is loaded
+                    // Send switch weight signal when last weight of column 1 is loaded
                     if (phase_counter == N-1)
                         sys_switch_in <= 1;
                     else
@@ -355,9 +384,8 @@ module systolic_wrapper #(
                         end
                     end
 
-                    // ---- Stop when weight and input sequences done ----
+                    // Stop when weight and input sequences done
                     if (phase_counter >= 3*N - 2) begin
-                        phase_counter <= '0;
                         state <= S_CAPTURE;
                     end
                 end
@@ -368,7 +396,14 @@ module systolic_wrapper #(
                     for (int i = 0; i < N; i++)
                         all_done &= (row_ptr[i] == N);
                     if (all_done)
+                        state <= S_DONE_COMPUTE;
+                end
+
+                S_DONE_COMPUTE: begin
+                    done_compute <= 1'b1;
+                    if (start_store) begin
                         state <= S_STORE_REQ;
+                    end
                 end
 
                 S_STORE_REQ: begin
@@ -406,7 +441,7 @@ module systolic_wrapper #(
                 end
 
                 S_DONE: begin
-                    done <= 1;
+                    done_store <= 1;
                     state <= S_IDLE;
                 end
 
