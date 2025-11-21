@@ -105,7 +105,6 @@ always_ff @(posedge clk) begin
     data_b_captured <= 1'b0;
   end else begin
     current_state <= next_state; 
-    end 
 
     if (mem_read_en) begin
       if (current_state == DATA_A_WAIT && mem_cnt_done) begin
@@ -165,11 +164,11 @@ always_comb begin
       mem_cnt_en = 1'b1;
       if (mem_cnt_done) begin
         if (opcode == 4'd2) begin
-        next_state = PROCESSING;
+          next_state = PROCESSING;
         end else if (use_constant) begin
-        next_state = DATA_CONST_REQ;
+          next_state = DATA_CONST_REQ;
         end else begin
-        next_state = DATA_B_REQ;
+          next_state = DATA_B_REQ;
         end
       end
     end

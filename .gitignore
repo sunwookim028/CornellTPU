@@ -9,3 +9,4 @@ src_4x4/
 test/
 test_4x4/
 results.xml
+compiler/mlp_instruction_trace.txt 

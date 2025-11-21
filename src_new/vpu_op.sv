@@ -16,6 +16,7 @@ localparam SUB = 4'd1;
 localparam RELU = 4'd2;
 localparam MUL = 4'd3;
 localparam D_RELU = 4'd4; // relu deriv for backward pass
+localparam MOV = 4'd5; // mov for compiler tranpose operation
 
 // internal signalas for computation result storing
 logic [DATA_W-1:0] result;
@@ -25,6 +26,9 @@ logic [DATA_W-1:0] relu_result;
 logic [DATA_W-1:0] d_relu_result;
 logic [DATA_W-1:0] mul_a, mul_b;
 logic [DATA_W-1:0] mul_result;
+logic [DATA_W-1:0] mov_result;
+
+assign mov_result = operand0;
 
 // fp32 adder instance ; this can be adjusted for fxp
 logic [DATA_W-1:0] operand1_neg;
@@ -81,6 +85,9 @@ always_comb begin
       end
       D_RELU: begin
         result = d_relu_result;
+      end
+      MOV: begin
+        result = mov_result;
       end
       default: begin
         result = {DATA_W{1'b0}};

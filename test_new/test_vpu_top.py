@@ -13,7 +13,7 @@ def test_vpu_top():
 
 module test_vpu_top;
     parameter DATA_W = 32;
-    parameter ADDR_W = 16;
+    parameter ADDR_W = 13;
     parameter OP_W = 4;
     parameter INST_ADDR = 5;
     
@@ -79,58 +79,62 @@ module test_vpu_top;
     
     // Helper function to print state
     function string get_state_name;
-        input [2:0] state;
+        input [3:0] state;
         case (state)
-            3'd0: get_state_name = "IDLE      ";
-            3'd1: get_state_name = "DATA_A    ";
-            3'd2: get_state_name = "DATA_B    ";
-            3'd3: get_state_name = "DATA_CONST";
-            3'd4: get_state_name = "PROCESSING";
-            3'd5: get_state_name = "DATA_C    ";
-            default: get_state_name = "UNKNOWN  ";
+            4'd0: get_state_name = "IDLE        ";
+            4'd1: get_state_name = "DATA_A_REQ  ";
+            4'd2: get_state_name = "DATA_A_WAIT ";
+            4'd3: get_state_name = "DATA_B_REQ  ";
+            4'd4: get_state_name = "DATA_B_WAIT ";
+            4'd5: get_state_name = "DATA_CONST_REQ";
+            4'd6: get_state_name = "DATA_CONST_WAIT";
+            4'd7: get_state_name = "PROCESSING  ";
+            4'd8: get_state_name = "DATA_C_REQ  ";
+            4'd9: get_state_name = "DATA_C_WAIT ";
+            default: get_state_name = "UNKNOWN    ";
         endcase
     endfunction
-    
+        
     // Memory response task
     task memory_response;
-      begin
-          mem_read_en = 1'b0;
-          mem_write_en = 1'b0;
-          data_a = 32'h0;
-          data_b = 32'h0;
-          
-          case (dut.current_state)
-              dut.DATA_A: begin
-                  if (addr_a < 32) begin
-                      data_a = test_memory[addr_a];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read A: addr=%0d, data=0x%08x", addr_a, data_a);
-                  end
-              end
-              dut.DATA_B: begin
-                  if (addr_b < 32) begin
-                      data_b = test_memory[addr_b];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read B: addr=%0d, data=0x%08x", addr_b, data_b);
-                  end
-              end
-              dut.DATA_CONST: begin
-                  if (addr_b < 32) begin
-                      data_b = test_memory[addr_b];
-                      mem_read_en = 1'b1;
-                      $display("  Memory Read CONST: addr=%0d, data=0x%08x", addr_b, data_b);
-                  end
-              end
-              dut.DATA_C: begin
-                  if (addr_c < 32) begin
-                      test_memory[addr_c] = data_c;
-                      mem_write_en = 1'b1;
-                      $display("  Memory Write C: addr=%0d, data=0x%08x", addr_c, data_c);
-                  end
-              end
-          endcase
-      end
-  endtask
+    begin
+        mem_read_en = 1'b0;
+        mem_write_en = 1'b0;
+        data_a = 32'h0;
+        data_b = 32'h0;
+        
+        case (dut.current_state)
+            dut.DATA_A_REQ, dut.DATA_A_WAIT: begin
+                if (dut.addr_a < 32) begin
+                    data_a = test_memory[dut.addr_a];
+                    mem_read_en = 1'b1;
+                    $display("  Memory Read A: addr=%0d, data=0x%08x", dut.addr_a, data_a);
+                end
+            end
+            dut.DATA_B_REQ, dut.DATA_B_WAIT: begin
+                if (dut.addr_b < 32) begin
+                    data_b = test_memory[dut.addr_b];
+                    mem_read_en = 1'b1;
+                    $display("  Memory Read B: addr=%0d, data=0x%08x", dut.addr_b, data_b);
+                end
+            end
+            dut.DATA_CONST_REQ, dut.DATA_CONST_WAIT: begin
+                if (dut.addr_b < 32) begin
+                    data_b = test_memory[dut.addr_b];
+                    mem_read_en = 1'b1;
+                    $display("  Memory Read CONST: addr=%0d, data=0x%08x", dut.addr_b, data_b);
+                end
+            end
+            dut.DATA_C_REQ, dut.DATA_C_WAIT: begin
+                if (dut.addr_c < 32) begin
+                    test_memory[dut.addr_c] = dut.data_c;
+                    mem_write_en = 1'b1;
+                    $display("  Memory Write C: addr=%0d, data=0x%08x", dut.addr_c, dut.data_c);
+                end
+            end
+        endcase
+    end
+    endtask
       
     // Test task
     task test_instruction;
