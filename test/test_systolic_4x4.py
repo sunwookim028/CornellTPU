@@ -1,406 +1,501 @@
 # import cocotb
+# from cocotb.clock import Clock
+# from cocotb.triggers import RisingEdge, Timer
+
+# import struct
+
+# X = [
+#     [0.1, 0.2, 0.3, 0.4],
+#     [0.5, 0.6, 0.7, 0.8],
+#     [0.9, 1.0, 1.1, 1.2],
+#     [1.3, 1.4, 1.5, 1.6]
+# ]
+
+# W1 = [
+#     [1., 0., 0., 0.],
+#     [0., 1., 0., 0.],
+#     [0., 0., 1., 0.],
+#     [0., 0., 0., 1.]
+# ]
+
+# OUT = [
+#     [0.1, 0.2, 0.3, 0.4],
+#     [0.5, 0.6, 0.7, 0.8],
+#     [0.9, 1.0, 1.1, 1.2],
+#     [1.3, 1.4, 1.5, 1.6]
+# ]
+
+# def float_to_fp32_bits(val: float) -> int:
+#     """Convert Python float to 32-bit IEEE-754 single-precision bit pattern."""
+#     return struct.unpack(">I", struct.pack(">f", val))[0]
+
+
+# @cocotb.test()
+# async def test_systolic_array_4x4_fp32(dut):
+
+#     # Create a clock
+#     clock = Clock(dut.clk, 10, units="ns")
+#     cocotb.start_soon(clock.start())
+    
+#     # Reset the DUT
+#     dut.rst.value = 1
+#     dut.sys_accept_w_1.value = 0
+#     dut.sys_accept_w_2.value = 0
+#     dut.sys_accept_w_3.value = 0
+#     dut.sys_accept_w_4.value = 0
+#     dut.sys_switch_in.value = 0
+#     await RisingEdge(dut.clk)
+#     await RisingEdge(dut.clk)  # allow reset to propagate
+
+#     # ===================== Load Weights =====================
+
+#     # Cycle 1: load first weight into column 1
+#     dut.rst.value = 0
+#     dut.sys_weight_in_11.value = float_to_fp32_bits(W1[0][3])
+#     dut.sys_accept_w_1.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 2: load second weight into column 1, first into column 2
+#     dut.sys_weight_in_11.value = float_to_fp32_bits(W1[0][2])
+#     dut.sys_accept_w_1.value = 1
+#     dut.sys_weight_in_12.value = float_to_fp32_bits(W1[1][3])
+#     dut.sys_accept_w_2.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 3: load third into col 1, second into col 2, first into col 3
+#     dut.sys_weight_in_11.value = float_to_fp32_bits(W1[0][1])
+#     dut.sys_accept_w_1.value = 1
+#     dut.sys_weight_in_12.value = float_to_fp32_bits(W1[1][2])
+#     dut.sys_accept_w_2.value = 1
+#     dut.sys_weight_in_13.value = float_to_fp32_bits(W1[2][3])
+#     dut.sys_accept_w_3.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 4: fourth into col 1, third into col 2, second into col 3, first into col 4
+#     dut.sys_weight_in_11.value = float_to_fp32_bits(W1[0][0])
+#     dut.sys_accept_w_1.value = 1
+#     dut.sys_weight_in_12.value = float_to_fp32_bits(W1[1][1])
+#     dut.sys_accept_w_2.value = 1
+#     dut.sys_weight_in_13.value = float_to_fp32_bits(W1[2][2])
+#     dut.sys_accept_w_3.value = 1
+#     dut.sys_weight_in_14.value = float_to_fp32_bits(W1[3][3])
+#     dut.sys_accept_w_4.value = 1
+
+#     dut.sys_switch_in.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 5: finish col 1, continue others, start feeding X
+#     dut.sys_accept_w_1.value = 0
+
+#     dut.sys_weight_in_12.value = float_to_fp32_bits(W1[1][0])
+#     dut.sys_accept_w_2.value = 1
+#     dut.sys_weight_in_13.value = float_to_fp32_bits(W1[2][1])
+#     dut.sys_accept_w_3.value = 1
+#     dut.sys_weight_in_14.value = float_to_fp32_bits(W1[3][2])
+#     dut.sys_accept_w_4.value = 1
+
+#     dut.sys_switch_in.value = 0
+
+#     # Load first X into row 1
+#     dut.sys_data_in_11.value = float_to_fp32_bits(X[0][0])
+#     dut.sys_start_1.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 6: continue weights, feed more X
+#     dut.sys_accept_w_1.value = 0
+#     dut.sys_accept_w_2.value = 0
+
+#     dut.sys_weight_in_13.value = float_to_fp32_bits(W1[2][0])
+#     dut.sys_accept_w_3.value = 1
+#     dut.sys_weight_in_14.value = float_to_fp32_bits(W1[3][1])
+#     dut.sys_accept_w_4.value = 1
+
+#     # Load second X into row 1, first X into row 2
+#     dut.sys_data_in_11.value = float_to_fp32_bits(X[1][0])
+#     dut.sys_start_1.value = 1
+#     dut.sys_data_in_21.value = float_to_fp32_bits(X[0][1])
+#     dut.sys_start_2.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 7: finish weights into col 4, feed more X
+#     dut.sys_accept_w_1.value = 0
+#     dut.sys_accept_w_2.value = 0
+#     dut.sys_accept_w_3.value = 0
+
+#     dut.sys_weight_in_14.value = float_to_fp32_bits(W1[3][0])
+#     dut.sys_accept_w_4.value = 1
+
+#     # Load third X into row 1, second into row 2, first into row 3
+#     dut.sys_data_in_11.value = float_to_fp32_bits(X[2][0])
+#     dut.sys_start_1.value = 1
+#     dut.sys_data_in_21.value = float_to_fp32_bits(X[1][1])
+#     dut.sys_start_2.value = 1
+#     dut.sys_data_in_31.value = float_to_fp32_bits(X[0][2])
+#     dut.sys_start_3.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 8: all accept_w low, feed more X
+#     dut.sys_accept_w_1.value = 0
+#     dut.sys_accept_w_2.value = 0
+#     dut.sys_accept_w_3.value = 0
+#     dut.sys_accept_w_4.value = 0
+
+#     # Load fourth X into row 1, third into row 2, second into row 3, first into row 4
+#     dut.sys_data_in_11.value = float_to_fp32_bits(X[3][0])
+#     dut.sys_start_1.value = 1
+#     dut.sys_data_in_21.value = float_to_fp32_bits(X[2][1])
+#     dut.sys_start_2.value = 1
+#     dut.sys_data_in_31.value = float_to_fp32_bits(X[1][2])
+#     dut.sys_start_3.value = 1
+#     dut.sys_data_in_41.value = float_to_fp32_bits(X[0][3])
+#     dut.sys_start_4.value = 1
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 9: continue feeding X, start checking outputs
+#     dut.sys_start_1.value = 0  # done with row 1
+#     dut.sys_data_in_21.value = float_to_fp32_bits(X[3][1])
+#     dut.sys_start_2.value = 1
+#     dut.sys_data_in_31.value = float_to_fp32_bits(X[2][2])
+#     dut.sys_start_3.value = 1
+#     dut.sys_data_in_41.value = float_to_fp32_bits(X[1][3])
+#     dut.sys_start_4.value = 1
+
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_41.value) == float_to_fp32_bits(OUT[0][0])
+#     assert dut.sys_valid_out_41.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 10
+#     dut.sys_start_2.value = 0  # done with row 2
+#     dut.sys_data_in_31.value = float_to_fp32_bits(X[3][2])
+#     dut.sys_start_3.value = 1
+#     dut.sys_data_in_41.value = float_to_fp32_bits(X[2][3])
+#     dut.sys_start_4.value = 1
+
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_41.value) == float_to_fp32_bits(OUT[1][0])
+#     assert dut.sys_valid_out_41.value == 1
+#     assert int(dut.sys_data_out_42.value) == float_to_fp32_bits(OUT[0][1])
+#     assert dut.sys_valid_out_42.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 11
+#     dut.sys_start_3.value = 0  # done with row 3
+#     dut.sys_data_in_41.value = float_to_fp32_bits(X[3][3])
+#     dut.sys_start_4.value = 1
+
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_41.value) == float_to_fp32_bits(OUT[2][0])
+#     assert dut.sys_valid_out_41.value == 1
+#     assert int(dut.sys_data_out_42.value) == float_to_fp32_bits(OUT[1][1])
+#     assert dut.sys_valid_out_42.value == 1
+#     assert int(dut.sys_data_out_43.value) == float_to_fp32_bits(OUT[0][2])
+#     assert dut.sys_valid_out_43.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 12
+#     dut.sys_start_4.value = 0  # done with row 4
+
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_41.value) == float_to_fp32_bits(OUT[3][0])
+#     assert dut.sys_valid_out_41.value == 1
+
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_41.value) == float_to_fp32_bits(OUT[3][0])
+#     assert dut.sys_valid_out_41.value == 1
+#     assert int(dut.sys_data_out_42.value) == float_to_fp32_bits(OUT[2][1])
+#     assert dut.sys_valid_out_42.value == 1
+#     assert int(dut.sys_data_out_43.value) == float_to_fp32_bits(OUT[1][2])
+#     assert dut.sys_valid_out_43.value == 1
+#     assert int(dut.sys_data_out_44.value) == float_to_fp32_bits(OUT[0][3])
+#     assert dut.sys_valid_out_44.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 13
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_42.value) == float_to_fp32_bits(OUT[3][1])
+#     assert dut.sys_valid_out_42.value == 1
+#     assert int(dut.sys_data_out_43.value) == float_to_fp32_bits(OUT[2][2])
+#     assert dut.sys_valid_out_43.value == 1
+#     assert int(dut.sys_data_out_44.value) == float_to_fp32_bits(OUT[1][3])
+#     assert dut.sys_valid_out_44.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 14
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_43.value) == float_to_fp32_bits(OUT[3][2])
+#     assert dut.sys_valid_out_43.value == 1
+#     assert int(dut.sys_data_out_44.value) == float_to_fp32_bits(OUT[2][3])
+#     assert dut.sys_valid_out_44.value == 1
+
+#     await RisingEdge(dut.clk)
+
+#     # Cycle 15
+#     await Timer(1, units="ns")
+#     assert int(dut.sys_data_out_44.value) == float_to_fp32_bits(OUT[3][3])
+#     assert dut.sys_valid_out_44.value == 1
+
+#     await RisingEdge(dut.clk)
+
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, Timer, ClockCycles
+from cocotb.triggers import RisingEdge, Timer
+import struct
 
 X = [
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],
     [0.9, 1.0, 1.1, 1.2],
-    [1.3, 1.4, 1.5, 1.6]
+    [1.3, 1.4, 1.5, 1.6],
 ]
 
-
 W1 = [
-    [1., 0., 0., 0.],
-    [0., 1., 0., 0.],
-    [0., 0., 1., 0.],
-    [0., 0., 0., 1.]
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
 ]
 
 OUT = [
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],
     [0.9, 1.0, 1.1, 1.2],
-    [1.3, 1.4, 1.5, 1.6]
+    [1.3, 1.4, 1.5, 1.6],
 ]
 
 
-def to_fixed(val, frac_bits=8):
-    """Convert a float to 16-bit fixed point with 8 fractional bits."""
-    scaled = int(round(val * (1 << frac_bits)))
-    return scaled & 0xFFFF
+def float_to_fp32_bits(val: float) -> int:
+    """Convert Python float to 32-bit IEEE-754 single-precision bit pattern."""
+    return struct.unpack(">I", struct.pack(">f", float(val)))[0]
 
-# Calculating X @ W1^T
 
 @cocotb.test()
-async def test_systolic_array_4x4(dut): 
+async def test_systolic_array_4x4_fp32(dut):
+    """
+    Directed FP32 test for a 4x4 systolic array with parameterized N.
+    Assumes:
+      - sys_data_in[0..3], sys_start[0..3]
+      - sys_weight_in[0..3], sys_accept_w[0..3]
+      - sys_data_out[0..3], sys_valid_out[0..3]
+    """
+
+    N = 4  # we’re testing the 4x4 instance
 
     # Create a clock
     clock = Clock(dut.clk, 10, units="ns")
     cocotb.start_soon(clock.start())
-    
-    # rst the DUT (device under test)
+
+    # Reset the DUT and clear control signals
     dut.rst.value = 1
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-    dut.sys_accept_w_3.value = 0
-    dut.sys_accept_w_4.value = 0
+    for i in range(N):
+        dut.sys_accept_w[i].value = 0
+        dut.sys_start[i].value = 0
+        dut.sys_data_in[i].value = 0
+        dut.sys_weight_in[i].value = 0
+
     dut.sys_switch_in.value = 0
+    if hasattr(dut, "ub_rd_col_size_in"):
+        dut.ub_rd_col_size_in.value = 0
+    if hasattr(dut, "ub_rd_col_size_valid_in"):
+        dut.ub_rd_col_size_valid_in.value = 0
+
     await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk) # Waiting two cycles here allows the reset to be visible in the waveform
+    await RisingEdge(dut.clk)  # allow reset to propagate
 
+    # ===================== Load Weights =====================
 
-
-    # Cycle 1:
-
-    # Load first weight into column 1
+    # Cycle 1: load first weight into column 0 (old col1)
     dut.rst.value = 0
-    dut.sys_weight_in_11.value = to_fixed(W1[0][3])
-    dut.sys_accept_w_1.value = 1
+    dut.sys_weight_in[0].value = float_to_fp32_bits(W1[0][3])
+    dut.sys_accept_w[0].value = 1
     await RisingEdge(dut.clk)
 
-
-    # Cycle 2:
-
-    # Load second weight into column 1
-    # Load first weight into column 2
-    dut.sys_weight_in_11.value = to_fixed(W1[0][2])
-    dut.sys_accept_w_1.value = 1
-    dut.sys_weight_in_12.value = to_fixed(W1[1][3])
-    dut.sys_accept_w_2.value = 1
-
+    # Cycle 2: load second weight into col0, first into col1
+    dut.sys_weight_in[0].value = float_to_fp32_bits(W1[0][2])
+    dut.sys_accept_w[0].value = 1
+    dut.sys_weight_in[1].value = float_to_fp32_bits(W1[1][3])
+    dut.sys_accept_w[1].value = 1
     await RisingEdge(dut.clk)
 
-
-    # Cycle 3:
-
-    # Load third weight into column 1
-    # Load second weight into column 2
-    # Load first weight into column 3
-    dut.sys_weight_in_11.value = to_fixed(W1[0][1])
-    dut.sys_accept_w_1.value = 1
-    dut.sys_weight_in_12.value = to_fixed(W1[1][2])
-    dut.sys_accept_w_2.value = 1
-    dut.sys_weight_in_13.value = to_fixed(W1[2][3])
-    dut.sys_accept_w_3.value = 1
-
+    # Cycle 3: third into col0, second into col1, first into col2
+    dut.sys_weight_in[0].value = float_to_fp32_bits(W1[0][1])
+    dut.sys_accept_w[0].value = 1
+    dut.sys_weight_in[1].value = float_to_fp32_bits(W1[1][2])
+    dut.sys_accept_w[1].value = 1
+    dut.sys_weight_in[2].value = float_to_fp32_bits(W1[2][3])
+    dut.sys_accept_w[2].value = 1
     await RisingEdge(dut.clk)
 
-
-    # Cycle 4:
-
-    # Load fourth weight into column 1
-    # Load third weight into column 2
-    # Load second weight into column 3
-    # Load first weight into column 4
-    dut.sys_weight_in_11.value = to_fixed(W1[0][0])
-    dut.sys_accept_w_1.value = 1
-    dut.sys_weight_in_12.value = to_fixed(W1[1][1])
-    dut.sys_accept_w_2.value = 1
-    dut.sys_weight_in_13.value = to_fixed(W1[2][2])
-    dut.sys_accept_w_3.value = 1
-    dut.sys_weight_in_14.value = to_fixed(W1[3][3])
-    dut.sys_accept_w_4.value = 1
+    # Cycle 4: fourth into col0, third into col1, second into col2, first into col3
+    dut.sys_weight_in[0].value = float_to_fp32_bits(W1[0][0])
+    dut.sys_accept_w[0].value = 1
+    dut.sys_weight_in[1].value = float_to_fp32_bits(W1[1][1])
+    dut.sys_accept_w[1].value = 1
+    dut.sys_weight_in[2].value = float_to_fp32_bits(W1[2][2])
+    dut.sys_accept_w[2].value = 1
+    dut.sys_weight_in[3].value = float_to_fp32_bits(W1[3][3])
+    dut.sys_accept_w[3].value = 1
 
     dut.sys_switch_in.value = 1
-
     await RisingEdge(dut.clk)
 
+    # Cycle 5: finish col0, continue others, start feeding X
+    dut.sys_accept_w[0].value = 0
 
-    # Cycle 5:
-
-    # Load fourth weight into column 2
-    # Load third weight into column 3
-    # Load second weight into column 4
-    dut.sys_accept_w_1.value = 0 # No longer getting new weights in col 1
-
-    dut.sys_weight_in_12.value = to_fixed(W1[1][0])
-    dut.sys_accept_w_2.value = 1
-    dut.sys_weight_in_13.value = to_fixed(W1[2][1])
-    dut.sys_accept_w_3.value = 1
-    dut.sys_weight_in_14.value = to_fixed(W1[3][2])
-    dut.sys_accept_w_4.value = 1
+    dut.sys_weight_in[1].value = float_to_fp32_bits(W1[1][0])
+    dut.sys_accept_w[1].value = 1
+    dut.sys_weight_in[2].value = float_to_fp32_bits(W1[2][1])
+    dut.sys_accept_w[2].value = 1
+    dut.sys_weight_in[3].value = float_to_fp32_bits(W1[3][2])
+    dut.sys_accept_w[3].value = 1
 
     dut.sys_switch_in.value = 0
 
-    # Load first X into row 1
-    dut.sys_data_in_11.value = to_fixed(X[0][0])
-    dut.sys_start_1.value = 1
-
+    # Load first X into row 0
+    dut.sys_data_in[0].value = float_to_fp32_bits(X[0][0])
+    dut.sys_start[0].value = 1
     await RisingEdge(dut.clk)
 
+    # Cycle 6: continue weights, feed more X
+    dut.sys_accept_w[0].value = 0
+    dut.sys_accept_w[1].value = 0
 
-    # Cycle 6:
+    dut.sys_weight_in[2].value = float_to_fp32_bits(W1[2][0])
+    dut.sys_accept_w[2].value = 1
+    dut.sys_weight_in[3].value = float_to_fp32_bits(W1[3][1])
+    dut.sys_accept_w[3].value = 1
 
-    # Load fourth weight into column 3
-    # Load third weight into column 4
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-
-    dut.sys_weight_in_13.value = to_fixed(W1[2][0])
-    dut.sys_accept_w_3.value = 1
-    dut.sys_weight_in_14.value = to_fixed(W1[3][1])
-    dut.sys_accept_w_4.value = 1
-
-    # Load second X into row 1
-    # Load first x into row 2
-    dut.sys_data_in_11.value = to_fixed(X[1][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[0][1])
-    dut.sys_start_2.value = 1
-
+    # Load second X into row 0, first X into row 1
+    dut.sys_data_in[0].value = float_to_fp32_bits(X[1][0])
+    dut.sys_start[0].value = 1
+    dut.sys_data_in[1].value = float_to_fp32_bits(X[0][1])
+    dut.sys_start[1].value = 1
     await RisingEdge(dut.clk)
 
+    # Cycle 7: finish weights into col3, feed more X
+    dut.sys_accept_w[0].value = 0
+    dut.sys_accept_w[1].value = 0
+    dut.sys_accept_w[2].value = 0
 
-    # Cycle 7:
+    dut.sys_weight_in[3].value = float_to_fp32_bits(W1[3][0])
+    dut.sys_accept_w[3].value = 1
 
-    # Load fourth weight into column 4
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-    dut.sys_accept_w_3.value = 0
-
-    dut.sys_weight_in_14.value = to_fixed(W1[3][0])
-    dut.sys_accept_w_4.value = 1
-
-    # Load third X into row 1
-    # Load second x into row 2
-    # Load first x into row 3
-    dut.sys_data_in_11.value = to_fixed(X[2][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[1][1])
-    dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[0][2])
-    dut.sys_start_3.value = 1
-
-
+    # Load third X into row 0, second into row 1, first into row 2
+    dut.sys_data_in[0].value = float_to_fp32_bits(X[2][0])
+    dut.sys_start[0].value = 1
+    dut.sys_data_in[1].value = float_to_fp32_bits(X[1][1])
+    dut.sys_start[1].value = 1
+    dut.sys_data_in[2].value = float_to_fp32_bits(X[0][2])
+    dut.sys_start[2].value = 1
     await RisingEdge(dut.clk)
 
-    # OUT_11 = w11*x11 + w12*x12 + w13*x13 + w14*x14
+    # Cycle 8: all accept_w low, feed more X
+    for i in range(N):
+        dut.sys_accept_w[i].value = 0
 
-    # Cycle 8:
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-    dut.sys_accept_w_3.value = 0
-    dut.sys_accept_w_4.value = 0
-
-    # Load fourth X into row 1
-    # Load third x into row 2
-    # Load second x into row 3
-    # Load first x into row 4
-    dut.sys_data_in_11.value = to_fixed(X[3][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[2][1])
-    dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[1][2])
-    dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[0][3])
-    dut.sys_start_4.value = 1
-    
+    # Load fourth X into row 0, third into row 1, second into row 2, first into row 3
+    dut.sys_data_in[0].value = float_to_fp32_bits(X[3][0])
+    dut.sys_start[0].value = 1
+    dut.sys_data_in[1].value = float_to_fp32_bits(X[2][1])
+    dut.sys_start[1].value = 1
+    dut.sys_data_in[2].value = float_to_fp32_bits(X[1][2])
+    dut.sys_start[2].value = 1
+    dut.sys_data_in[3].value = float_to_fp32_bits(X[0][3])
+    dut.sys_start[3].value = 1
     await RisingEdge(dut.clk)
 
+    # Cycle 9: continue feeding X, start checking outputs
+    dut.sys_start[0].value = 0  # done with row 0
+    dut.sys_data_in[1].value = float_to_fp32_bits(X[3][1])
+    dut.sys_start[1].value = 1
+    dut.sys_data_in[2].value = float_to_fp32_bits(X[2][2])
+    dut.sys_start[2].value = 1
+    dut.sys_data_in[3].value = float_to_fp32_bits(X[1][3])
+    dut.sys_start[3].value = 1
 
-    # Cycle 9:
-
-    # Load fourth x into row 2
-    # Load third x into row 3
-    # Load second x into row 4
-    dut.sys_start_1.value = 0 # Done inputting x to row 1
-    dut.sys_data_in_21.value = to_fixed(X[3][1])
-    dut.sys_start_2.value = 1
-    dut.sys_data_in_31.value = to_fixed(X[2][2])
-    dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[1][3])
-    dut.sys_start_4.value = 1
-
-    # Wait for 1 nanosecond
     await Timer(1, units="ns")
-    assert dut.sys_data_out_41.value == to_fixed(OUT[0][0])
-    assert dut.sys_valid_out_41.value == 1
-
+    assert int(dut.sys_data_out[0].value) == float_to_fp32_bits(OUT[0][0])
+    assert dut.sys_valid_out[0].value == 1
 
     await RisingEdge(dut.clk)
 
-    # OUT_31 = w11*x31 + w12*x32 + w13*x33 + w14*x34
-    # OUT_22 = w21*x21 + w22*x22 + w23*x23 + w24*x24
-    # OUT_13 = w31*x11 + w32*x12 + w33*x13 + w34*x14
+    # Cycle 10
+    dut.sys_start[1].value = 0  # done with row 1
+    dut.sys_data_in[2].value = float_to_fp32_bits(X[3][2])
+    dut.sys_start[2].value = 1
+    dut.sys_data_in[3].value = float_to_fp32_bits(X[2][3])
+    dut.sys_start[3].value = 1
 
-
-    # Cycle 10:
-
-    # Load fourth x into row 3
-    # Load third x into row 4
-    dut.sys_start_2.value = 0 # Done inputting x to row 2
-    dut.sys_data_in_31.value = to_fixed(X[3][2])
-    dut.sys_start_3.value = 1
-    dut.sys_data_in_41.value = to_fixed(X[2][3])
-    dut.sys_start_4.value = 1
-
-
-    # Wait for 1 nanosecond
     await Timer(1, units="ns")
-    assert dut.sys_data_out_41.value == to_fixed(OUT[1][0])
-    assert dut.sys_valid_out_41.value == 1
-    assert dut.sys_data_out_42.value == to_fixed(OUT[0][1])
-    assert dut.sys_valid_out_42.value == 1
+    assert int(dut.sys_data_out[0].value) == float_to_fp32_bits(OUT[1][0])
+    assert dut.sys_valid_out[0].value == 1
+    assert int(dut.sys_data_out[1].value) == float_to_fp32_bits(OUT[0][1])
+    assert dut.sys_valid_out[1].value == 1
 
     await RisingEdge(dut.clk)
 
+    # Cycle 11
+    dut.sys_start[2].value = 0  # done with row 2
+    dut.sys_data_in[3].value = float_to_fp32_bits(X[3][3])
+    dut.sys_start[3].value = 1
 
-    # OUT_41 = w11*x41 + w12*x42 + w13*x43 + w14*x44
-    # OUT_32 = w21*x31 + w22*x32 + w23*x33 + w24*x34
-    # OUT_23 = w31*x21 + w32*x22 + w33*x23 + w34*x24
-    # OUT_14 = w41*x11 + w42*x12 + w43*x13 + w44*x14
-
-    # Cycle 11:
-
-    # Load fourth x into row 4
-    dut.sys_start_3.value = 0 # Done inputting x to row 3
-    dut.sys_data_in_41.value = to_fixed(X[3][3])
-    dut.sys_start_4.value = 1
-
-    # Assert outputs
-    # Wait for 1 nanosecond
     await Timer(1, units="ns")
-    assert dut.sys_data_out_41.value == to_fixed(OUT[2][0])
-    assert dut.sys_valid_out_41.value == 1
-    assert dut.sys_data_out_42.value == to_fixed(OUT[1][1])
-    assert dut.sys_valid_out_42.value == 1
-    assert dut.sys_data_out_43.value == to_fixed(OUT[0][2])
-    assert dut.sys_valid_out_43.value == 1
+    assert int(dut.sys_data_out[0].value) == float_to_fp32_bits(OUT[2][0])
+    assert dut.sys_valid_out[0].value == 1
+    assert int(dut.sys_data_out[1].value) == float_to_fp32_bits(OUT[1][1])
+    assert dut.sys_valid_out[1].value == 1
+    assert int(dut.sys_data_out[2].value) == float_to_fp32_bits(OUT[0][2])
+    assert dut.sys_valid_out[2].value == 1
 
     await RisingEdge(dut.clk)
 
+    # Cycle 12
+    dut.sys_start[3].value = 0  # done with row 3
 
-    # OUT_42 = w21*x41 + w22*x42 + w23*x43 + w24*x44
-    # OUT_33 = w31*x31 + w32*x32 + w33*x33 + w34*x34
-    # OUT_24 = w41*x21 + w42*x22 + w43*x23 + w44*x24
-
-
-    # Cycle 12:
-
-    dut.sys_start_4.value = 0 # Done inputting x to row 4
-
-    # Assert outputs
-    # Wait for 1 nanosecond
     await Timer(1, units="ns")
-    assert dut.sys_data_out_41.value == to_fixed(OUT[3][0])
-    assert dut.sys_valid_out_41.value == 1
+    assert int(dut.sys_data_out[0].value) == float_to_fp32_bits(OUT[3][0])
+    assert dut.sys_valid_out[0].value == 1
 
-    # Assert outputs
-    # Wait for 1 nanosecond
     await Timer(1, units="ns")
-    assert dut.sys_data_out_41.value == to_fixed(OUT[3][0])
-    assert dut.sys_valid_out_41.value == 1
-    assert dut.sys_data_out_42.value == to_fixed(OUT[2][1])
-    assert dut.sys_valid_out_42.value == 1
-    assert dut.sys_data_out_43.value == to_fixed(OUT[1][2])
-    assert dut.sys_valid_out_43.value == 1
-    assert dut.sys_data_out_44.value == to_fixed(OUT[0][3])
-    assert dut.sys_valid_out_44.value == 1
+    assert int(dut.sys_data_out[0].value) == float_to_fp32_bits(OUT[3][0])
+    assert dut.sys_valid_out[0].value == 1
+    assert int(dut.sys_data_out[1].value) == float_to_fp32_bits(OUT[2][1])
+    assert dut.sys_valid_out[1].value == 1
+    assert int(dut.sys_data_out[2].value) == float_to_fp32_bits(OUT[1][2])
+    assert dut.sys_valid_out[2].value == 1
+    assert int(dut.sys_data_out[3].value) == float_to_fp32_bits(OUT[0][3])
+    assert dut.sys_valid_out[3].value == 1
 
     await RisingEdge(dut.clk)
 
-    # OUT_43 = w31*x41 + w32*x42 + w33*x43 + w34*x44
-    # OUT_34 = w41*x31 + w42*x32 + w43*x33 + w44*x34
-
-
-    # Cycle 13:
-
-    # Assert outputs
-    # Wait for 1 nanosecond
+    # Cycle 13
     await Timer(1, units="ns")
-    assert dut.sys_data_out_42.value == to_fixed(OUT[3][1])
-    assert dut.sys_valid_out_42.value == 1
-    assert dut.sys_data_out_43.value == to_fixed(OUT[2][2])
-    assert dut.sys_valid_out_43.value == 1
-    assert dut.sys_data_out_44.value == to_fixed(OUT[1][3])
-    assert dut.sys_valid_out_44.value == 1
+    assert int(dut.sys_data_out[1].value) == float_to_fp32_bits(OUT[3][1])
+    assert dut.sys_valid_out[1].value == 1
+    assert int(dut.sys_data_out[2].value) == float_to_fp32_bits(OUT[2][2])
+    assert dut.sys_valid_out[2].value == 1
+    assert int(dut.sys_data_out[3].value) == float_to_fp32_bits(OUT[1][3])
+    assert dut.sys_valid_out[3].value == 1
 
     await RisingEdge(dut.clk)
 
-    # OUT_44 = w41*x41 + w42*x42 + w43*x43 + w44*x44
-    
-
-    # Cycle 14:
-
-    # Assert outputs
-    # Wait for 1 nanosecond
+    # Cycle 14
     await Timer(1, units="ns")
-    assert dut.sys_data_out_43.value == to_fixed(OUT[3][2])
-    assert dut.sys_valid_out_43.value == 1
-    assert dut.sys_data_out_44.value == to_fixed(OUT[2][3])
-    assert dut.sys_valid_out_44.value == 1
+    assert int(dut.sys_data_out[2].value) == float_to_fp32_bits(OUT[3][2])
+    assert dut.sys_valid_out[2].value == 1
+    assert int(dut.sys_data_out[3].value) == float_to_fp32_bits(OUT[2][3])
+    assert dut.sys_valid_out[3].value == 1
 
     await RisingEdge(dut.clk)
 
-
-    # Cycle 15:
-
-    # Assert outputs
-    # Wait for 1 nanosecond
+    # Cycle 15
     await Timer(1, units="ns")
-    assert dut.sys_data_out_44.value == to_fixed(OUT[3][3])
-    assert dut.sys_valid_out_44.value == 1
+    assert int(dut.sys_data_out[3].value) == float_to_fp32_bits(OUT[3][3])
+    assert dut.sys_valid_out[3].value == 1
 
     await RisingEdge(dut.clk)
-
-    # Original test case below:
-    '''
-    dut.rst.value = 1
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-    dut.sys_switch_in.value = 0
-    await RisingEdge(dut.clk)
-
-    dut.rst.value = 0
-    dut.sys_weight_in_11.value = to_fixed(W1[0][1])
-    dut.sys_accept_w_1.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_weight_in_11.value = to_fixed(W1[0][0])
-    dut.sys_accept_w_1.value = 1
-    dut.sys_weight_in_12.value = to_fixed(W1[1][1])
-    dut.sys_accept_w_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_accept_w_1.value = 0
-    dut.sys_weight_in_12.value = to_fixed(W1[1][0])
-    dut.sys_accept_w_2.value = 1
-    dut.sys_switch_in.value = 1
-    dut.sys_data_in_11.value = to_fixed(X[0][0])
-    dut.sys_start_1.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_accept_w_1.value = 0
-    dut.sys_accept_w_2.value = 0
-    dut.sys_switch_in.value = 0
-    dut.sys_data_in_11.value = to_fixed(X[1][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[0][1])
-    dut.sys_start_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_data_in_11.value = to_fixed(X[2][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[1][1])
-    dut.sys_start_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_data_in_11.value = to_fixed(X[3][0])
-    dut.sys_start_1.value = 1
-    dut.sys_data_in_21.value = to_fixed(X[2][1])
-    dut.sys_start_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_start_1.value = 0
-    dut.sys_data_in_21.value = to_fixed(X[3][1])
-    dut.sys_start_2.value = 1
-    await RisingEdge(dut.clk)
-
-    dut.sys_start_1.value = 0
-    dut.sys_start_2.value = 0
-    await RisingEdge(dut.clk)
-    
-    await ClockCycles(dut.clk, 10)
-    '''
