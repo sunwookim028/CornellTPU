@@ -5,7 +5,12 @@ import cocotb
 from cocotb.triggers import RisingEdge, Timer
 import numpy as np
 
+import struct
+
 from systolic_test_suite import TEST_CASES
+
+DATAWIDTH = 32 # If this is changed, the add/mul units in pe.sv must be changed to fit new data type
+N = 4
 
 # Fixed-point helpers
 def to_fixed(val, frac_bits=8):
@@ -15,9 +20,13 @@ def to_fixed(val, frac_bits=8):
 def from_fixed(val, frac_bits=8):
     return float(val) / (1 << frac_bits)
 
+# FP32 Helper
+def float_to_fp32_bits(val: float) -> int:
+    """Convert Python float to 32-bit IEEE-754 single-precision bit pattern."""
+    return struct.unpack(">I", struct.pack(">f", float(val)))[0]
+
 
 async def run_single_test(dut, W, X, test_name):
-    N = 4
     results = []
 
     # Reset
@@ -33,8 +42,8 @@ async def run_single_test(dut, W, X, test_name):
     W_flat = W.flatten()
     X_flat = X.flatten()
 
-    W_fixed = [to_fixed(v) for v in W_flat]
-    X_fixed = [to_fixed(v) for v in X_flat]
+    W_fixed = [float_to_fp32_bits(v) for v in W_flat]
+    X_fixed = [float_to_fp32_bits(v) for v in X_flat]
 
     # Load into mock memory
     for i, val in enumerate(W_fixed):
@@ -79,7 +88,11 @@ async def run_single_test(dut, W, X, test_name):
                 # We have to get creative w/ how we index the mem req data since
                 # the earlier entries live at the higher indices in the output stream
                 j = dut.BANKING_FACTOR.value - (i+1)
-                results.append(from_fixed(int(dut.mem_req_data.value[16*j:(16*(j+1) - 1)].signed_integer)))
+                # For fixed point:
+                #results.append(from_fixed(int(dut.mem_req_data.value[DATAWIDTH*j:(DATAWIDTH*(j+1) - 1)].signed_integer)))
+                # For floating point: Interpret output result as FP32 and cast to Python float
+                output_bits = int(dut.mem_req_data.value[DATAWIDTH*j:(DATAWIDTH*(j+1) - 1)])
+                results.append(struct.unpack(">f", struct.pack(">I", output_bits))[0])
 
         if int(dut.done_store.value) == 1:
             break

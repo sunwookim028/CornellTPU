@@ -17,10 +17,7 @@ module systolic #(
     input  logic [DATA_WIDTH-1:0] sys_weight_in [N],
     input  logic                  sys_accept_w  [N],
 
-    input  logic                  sys_switch_in,
-
-    input  logic [DATA_WIDTH-1:0] ub_rd_col_size_in,
-    input  logic                  ub_rd_col_size_valid_in
+    input  logic                  sys_switch_in
 );
 
     // =====================================================================

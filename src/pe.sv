@@ -62,6 +62,20 @@ module pe #(
         .result ( mac_out      )
     );
 
+    //fxp_mul mult (
+    //    .ina(pe_input_in),
+    //    .inb(weight_reg_active),
+    //    .out(mult_out),
+    //    .overflow()
+    //);
+
+    //fxp_add adder (
+    //    .ina(mult_out),
+    //    .inb(pe_psum_in),
+    //    .out(mac_out),
+    //    .overflow()
+    //);
+
     // ------------------------------------------------------------------------
     // Sequential control + register updates
     // ------------------------------------------------------------------------

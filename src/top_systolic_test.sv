@@ -4,8 +4,8 @@
 module top_systolic_test;
 
     localparam int N = 4;
-    localparam int DATA_WIDTH = 16;
-    localparam int BANKING_FACTOR = 4;
+    localparam int DATA_WIDTH = 32;
+    localparam int BANKING_FACTOR = 1;
     localparam int ADDRESS_WIDTH = 13;
     localparam int MEM_LATENCY = 3;
 

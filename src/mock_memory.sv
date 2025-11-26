@@ -33,8 +33,8 @@ module mock_memory #(
     initial begin
         integer i;
         for (i = 0; i < TOTAL_ELEMS; i++) begin
-            weight_matrix[i] = (i % N) << 8;  // 0000, 0100, 0200, 0300
-            x_matrix[i]      = ((i % N) << 8) + 16'h0001; // 0001, 0101, ...
+            weight_matrix[i] = '0;
+            x_matrix[i]      = '0;
         end
     end
 

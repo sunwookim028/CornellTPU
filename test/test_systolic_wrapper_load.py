@@ -25,8 +25,21 @@ async def test_systolic_wrapper_fixedpoint(dut):
     await RisingEdge(dut.clk)
 
     # Initialize inputs
-    weight_vals = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
-    x_vals      = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
+    #weight_vals = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
+    #x_vals      = [np.random.uniform(-2.0,2.0) for i in range(N*N)]
+
+
+    weight_vals = [np.random.uniform(-2.0,2.0),np.random.uniform(-2.0,2.0),0,0,
+                   np.random.uniform(-2.0,2.0),np.random.uniform(-2.0,2.0),0,0,
+                   0,0,0,0,
+                   0,0,0,0
+                   ]
+
+    x_vals =       [np.random.uniform(-2.0,2.0),np.random.uniform(-2.0,2.0),0,0,
+                   np.random.uniform(-2.0,2.0),np.random.uniform(-2.0,2.0),0,0,
+                   0,0,0,0,
+                   0,0,0,0
+                   ]
 
     weight_fixed = [to_fixed(v) for v in weight_vals]
     x_fixed      = [to_fixed(v) for v in x_vals]

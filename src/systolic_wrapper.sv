@@ -34,88 +34,69 @@ module systolic_wrapper #(
     output logic                                  mem_write_en
 );
 
-    // Temporary (for debugging and facilitating Cocotb testbench):
-    // Store FP32 bit patterns (no arithmetic here, so unsigned is fine)
-    logic [DATA_WIDTH-1:0] out_matrix [N*N-1:0];
-
     // Helper function for indexing matrices with data stored in row-major order
     function automatic int idx(input int r, input int c);
         return r*N + c;
     endfunction
 
-    // Local buffer memory for W and X matrices
-    logic [DATA_WIDTH-1:0] weight_matrix [N*N-1:0];
-    logic [DATA_WIDTH-1:0] x_matrix      [N*N-1:0];
-
+    // Define useful constants
     localparam int TOTAL_ELEMS    = N*N;
     localparam int BYTES_PER_BEAT = BANKING_FACTOR * (DATA_WIDTH / 8);
 
-    // Registers to latch matrix addresses
-    logic [ADDRESS_WIDTH-1:0] base_addr_x_reg, base_addr_w_reg, base_addr_out_reg;
+    // Local buffer memory for W, X, and output matrices
+    logic [DATA_WIDTH-1:0] weight_matrix [N*N-1:0];
+    logic [DATA_WIDTH-1:0] x_matrix      [N*N-1:0];
+    logic [DATA_WIDTH-1:0] out_matrix    [N*N-1:0];
 
+    // Registers to latch matrix addresses
+    logic [ADDRESS_WIDTH-1:0] base_addr_x_reg;
+    logic [ADDRESS_WIDTH-1:0] base_addr_w_reg;
+    logic [ADDRESS_WIDTH-1:0] base_addr_out_reg;
+    
     // Index for load progress (indexes loading beats)
     integer load_idx;
 
     // Timer for memory fixed latency
     logic [$clog2(MEM_LATENCY+1)-1:0] mem_latency_timer;
 
-    // X and W matrix elements for input into array (FP32 bit patterns)
-    logic [DATA_WIDTH-1:0]
-        sys_weight_in_11, sys_weight_in_12, sys_weight_in_13, sys_weight_in_14,
-        sys_data_in_11,   sys_data_in_21,   sys_data_in_31,   sys_data_in_41;
+    // Data flow to/from systolic array datapath
+    logic [DATA_WIDTH-1:0] sys_data_in   [N];
+    logic [DATA_WIDTH-1:0] sys_data_out  [N];
+    logic [DATA_WIDTH-1:0] sys_weight_in [N];
 
     // Control signals
-    logic
-        sys_accept_w_1, sys_accept_w_2, sys_accept_w_3, sys_accept_w_4,
-        sys_start_1, sys_start_2, sys_start_3, sys_start_4,
-        sys_switch_in;
+    logic                  sys_switch_in;
+    logic                  sys_start     [N];
+    logic                  sys_valid_out [N];
+    logic                  sys_accept_w  [N];
 
-    // Output matrix elements (FP32 bit patterns)
-    logic [DATA_WIDTH-1:0]
-        sys_data_out_41, sys_data_out_42, sys_data_out_43, sys_data_out_44;
-
-    // Status signals
-    logic
-        sys_valid_out_41, sys_valid_out_42, sys_valid_out_43, sys_valid_out_44;
-
-    // These are not data-width dependent
-    logic [15:0] ub_rd_col_size_in   = 16'd0; 
-    logic        ub_rd_col_size_valid_in = 1'b0; 
-
-    // Systolic array (assumed 32-bit datapath internally)
-    systolic #( N ) array (
+    // Systolic array
+    systolic #( .N(N), .DATA_WIDTH(DATA_WIDTH) ) array (
         .clk(clk),
         .rst(rst),
 
-        .sys_data_in_11(sys_data_in_11),
-        .sys_data_in_21(sys_data_in_21),
-        .sys_data_in_31(sys_data_in_31),
-        .sys_data_in_41(sys_data_in_41),
-        .sys_start_1(sys_start_1),
-        .sys_start_2(sys_start_2),
-        .sys_start_3(sys_start_3),
-        .sys_start_4(sys_start_4),
-        .sys_data_out_41(sys_data_out_41),
-        .sys_data_out_42(sys_data_out_42),
-        .sys_data_out_43(sys_data_out_43),
-        .sys_data_out_44(sys_data_out_44),
-        .sys_valid_out_41(sys_valid_out_41),
-        .sys_valid_out_42(sys_valid_out_42),
-        .sys_valid_out_43(sys_valid_out_43),
-        .sys_valid_out_44(sys_valid_out_44),
-        .sys_weight_in_11(sys_weight_in_11),
-        .sys_weight_in_12(sys_weight_in_12),
-        .sys_weight_in_13(sys_weight_in_13),
-        .sys_weight_in_14(sys_weight_in_14),
-        .sys_accept_w_1(sys_accept_w_1),
-        .sys_accept_w_2(sys_accept_w_2),
-        .sys_accept_w_3(sys_accept_w_3),
-        .sys_accept_w_4(sys_accept_w_4),
-        .sys_switch_in(sys_switch_in),
-        .ub_rd_col_size_in(ub_rd_col_size_in),
-        .ub_rd_col_size_valid_in(ub_rd_col_size_valid_in)
+        .sys_data_in(sys_data_in),
+        .sys_start(sys_start),
+        //.sys_data_out(sys_data_out),
+        //.sys_valid_out(sys_valid_out),
+        .sys_weight_in(sys_weight_in),
+        .sys_accept_w(sys_accept_w),
+
+        .sys_switch_in(sys_switch_in)
     );
 
+    // Manually connect sys_data_out and sys_valid_out arrays
+    // Have to do this because Icarus verilog can't handle
+    // unpacked arrays in port list
+    genvar p;
+    generate
+        for (p = 0; p < N; p++) begin
+            assign sys_data_out[p] = array.sys_data_out[p];
+            assign sys_valid_out[p] = array.sys_valid_out[p];
+        end
+    endgenerate
+
+    // Create enum for FSM states
     typedef enum logic [3:0] {
         S_IDLE, // Idle; wait for start_load signal
         S_LOAD_W_REQ, // Send a request to mem for w element(s)
@@ -132,6 +113,8 @@ module systolic_wrapper #(
     } state_t;
 
     state_t state;
+
+    // Logic for matrix indexing when interacting with datapath
     logic [$clog2(8*N):0] phase_counter;
     integer row_ptr [N];
 
@@ -143,21 +126,11 @@ module systolic_wrapper #(
                 for (int c = 0; c < N; c++)
                     out_matrix[idx(r,c)] <= '0;
         end else begin
-            if (sys_valid_out_41 && row_ptr[0] < N) begin
-                out_matrix[idx(row_ptr[0],0)] <= sys_data_out_41;
-                row_ptr[0] <= row_ptr[0] + 1;
-            end
-            if (sys_valid_out_42 && row_ptr[1] < N) begin
-                out_matrix[idx(row_ptr[1],1)] <= sys_data_out_42;
-                row_ptr[1] <= row_ptr[1] + 1;
-            end
-            if (sys_valid_out_43 && row_ptr[2] < N) begin
-                out_matrix[idx(row_ptr[2],2)] <= sys_data_out_43;
-                row_ptr[2] <= row_ptr[2] + 1;
-            end
-            if (sys_valid_out_44 && row_ptr[3] < N) begin
-                out_matrix[idx(row_ptr[3],3)] <= sys_data_out_44;
-                row_ptr[3] <= row_ptr[3] + 1;
+            for (int i = 0; i < N; i++) begin
+                if (sys_valid_out[i] && row_ptr[i] < N) begin
+                    out_matrix[idx(row_ptr[i],i)] <= sys_data_out[i];
+                    row_ptr[i] <= row_ptr[i] + 1;
+                end
             end
         end
     end
@@ -189,24 +162,14 @@ module systolic_wrapper #(
             base_addr_w_reg   <= '0;
             base_addr_out_reg <= '0;
 
-            // Datapath control signals
-            sys_accept_w_1 <= 0;
-            sys_accept_w_2 <= 0;
-            sys_accept_w_3 <= 0;
-            sys_accept_w_4 <= 0;
-            sys_start_1 <= 0;
-            sys_start_2 <= 0;
-            sys_start_3 <= 0;
-            sys_start_4 <= 0;
+            // Reset datapath control signals
+            for (int i = 0; i < N; i++) begin
+                sys_accept_w[i] <= '0;
+                sys_start[i] <= '0;
+                sys_weight_in[i] <= '0;
+                sys_data_in[i] <= '0;
+            end
             sys_switch_in <= 0;
-            sys_weight_in_11 <= '0;
-            sys_weight_in_12 <= '0;
-            sys_weight_in_13 <= '0;
-            sys_weight_in_14 <= '0;
-            sys_data_in_11 <= '0;
-            sys_data_in_21 <= '0;
-            sys_data_in_31 <= '0;
-            sys_data_in_41 <= '0;
 
             // Reset local matrix buffers
             for (int k = 0; k < N*N; k++) begin
@@ -221,24 +184,14 @@ module systolic_wrapper #(
             done_compute <= 0;
             done_store <= 0;
 
-            // Datapath control signals
-            sys_accept_w_1 <= 0;
-            sys_accept_w_2 <= 0;
-            sys_accept_w_3 <= 0;
-            sys_accept_w_4 <= 0;
-            sys_start_1 <= 0;
-            sys_start_2 <= 0;
-            sys_start_3 <= 0;
-            sys_start_4 <= 0;
+            // Reset datapath control signals
+            for (int i = 0; i < N; i++) begin
+                sys_accept_w[i] <= '0;
+                sys_start[i] <= '0;
+                sys_weight_in[i] <= '0;
+                sys_data_in[i] <= '0;
+            end
             sys_switch_in <= 0;
-            sys_weight_in_11 <= '0;
-            sys_weight_in_12 <= '0;
-            sys_weight_in_13 <= '0;
-            sys_weight_in_14 <= '0;
-            sys_data_in_11 <= '0;
-            sys_data_in_21 <= '0;
-            sys_data_in_31 <= '0;
-            sys_data_in_41 <= '0;
 
             mem_req_addr  <= '0;
             mem_req_data  <= '0;
@@ -330,29 +283,12 @@ module systolic_wrapper #(
                     phase_counter <= phase_counter + 1;
 
                     // Weight pipeline: column-major, reversed along rows
-                    // Column 0
-                    if (phase_counter < N) begin
-                        sys_weight_in_11 <= weight_matrix[idx(0, N-1-phase_counter)];
-                        sys_accept_w_1   <= 1;
-                    end else sys_accept_w_1 <= 0;
-
-                    // Column 1
-                    if (phase_counter >= 1 && phase_counter < N+1) begin
-                        sys_weight_in_12 <= weight_matrix[idx(1, N-1-(phase_counter-1))];
-                        sys_accept_w_2   <= 1;
-                    end else sys_accept_w_2 <= 0;
-
-                    // Column 2
-                    if (phase_counter >= 2 && phase_counter < N+2) begin
-                        sys_weight_in_13 <= weight_matrix[idx(2, N-1-(phase_counter-2))];
-                        sys_accept_w_3   <= 1;
-                    end else sys_accept_w_3 <= 0;
-
-                    // Column 3
-                    if (phase_counter >= 3 && phase_counter < N+3) begin
-                        sys_weight_in_14 <= weight_matrix[idx(3, N-1-(phase_counter-3))];
-                        sys_accept_w_4   <= 1;
-                    end else sys_accept_w_4 <= 0;
+                    for (int i=0; i < N; i++) begin
+                        if ((phase_counter >= i) && (phase_counter < (N + i))) begin
+                            sys_weight_in[i] <= weight_matrix[idx(i, (N - 1 - (phase_counter - i)))];
+                            sys_accept_w[i] <= 1;
+                        end else sys_accept_w[i] <= 0;
+                    end
 
                     // Send switch weight signal when last weight of column 1 is loaded
                     if (phase_counter == N-1)
@@ -365,12 +301,8 @@ module systolic_wrapper #(
                         int ph;
                         ph = phase_counter - (N + row); // row-dependent delay
                         if (ph >= 0 && ph < N) begin
-                            case (row)
-                                0: begin sys_start_1 <= 1; sys_data_in_11 <= x_matrix[idx(ph, 0)]; end
-                                1: begin sys_start_2 <= 1; sys_data_in_21 <= x_matrix[idx(ph, 1)]; end
-                                2: begin sys_start_3 <= 1; sys_data_in_31 <= x_matrix[idx(ph, 2)]; end
-                                3: begin sys_start_4 <= 1; sys_data_in_41 <= x_matrix[idx(ph, 3)]; end
-                            endcase
+                            sys_start[row] <= 1;
+                            sys_data_in[row] <= x_matrix[idx(ph, row)];
                         end
                     end
 
@@ -378,7 +310,6 @@ module systolic_wrapper #(
                     if (phase_counter >= 3*N - 2) begin
                         phase_counter <= '0;
                         state         <= S_CAPTURE;
-                        state <= S_CAPTURE;
                     end
                 end
 
@@ -438,13 +369,4 @@ module systolic_wrapper #(
             endcase
         end
     end
-
-    // Temporary: Break out the out matrix for waveform debugging
-    generate
-    for (genvar i = 0; i < N*N; i++) begin : OUT_DEBUG
-        logic [DATA_WIDTH-1:0] out_elem;
-        assign out_elem = out_matrix[i];
-    end
-    endgenerate
-
 endmodule
