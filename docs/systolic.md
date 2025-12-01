@@ -44,8 +44,12 @@ IDLE -> LOAD_W_REQ <--> LOAD_W_WAIT -> LOAD_X_REQ <--> LOAD_X_WAIT -> RUN -> CAP
 
 During the req states (i.e. load_w_req, load_x_req, store_req), the FSM sends a request to memory and then enters the corresponding wait state. During the wait state the FSM will wait the parameterized memory access latency before accepting a read response from memory (in the case of reads), or assuming a write was successful. The FSM will then either move on to the next state or return to the request state depending on whether the matrix has been fully loaded/stored.
 
+## Testing
+Testing focused on verifying functional correctness and scalability of the parameterized FP32 systolic array using a cocotb-based Python testbench. Inputs and weights were generated as FP32 matrices—including identity, random, and structured patterns—and converted to IEEE-754 bit patterns before being driven into the DUT. The expected results were computed by comparing element-by-element against the hardware outputs. Small arrays (4×4, 5×5) were used for bring-up and debugging, while larger tests (16×16) validated correct behavior at scale for the parameterized systolic array. VCD waveforms were generated as needed to debug dataflow timing, PE interactions, and MAC correctness, ensuring the systolic array’s cycle-level behavior matched the expected wavefront propagation.
+
+
 ## How to test systolic array:
 We are using cocotb to test our systolic array design. The systolic array is driven with precisely timed sequences of weight values (loaded column-by-column) and input activations (streamed row-by-row), matching the array’s intended dataflow. To create test cases, you must create a test points inside the Makefile that runs the Python testing file. To run these tests, in the terminal enter "make test_name." 
 
 ## Advanced Features: 
-Our goals for advanced features of the systolic array would be to explore larger models as well as maybe implementing a double buffer.
+In the future, exploring different systolic array architectures. 
