@@ -21,17 +21,17 @@ m = 4
 
 def weight_mul(W, X, m=4):
   # emulate mxm systolic array matrix multiplication
-  # W, X, Y : mxm fp32 matrices
-  # returns Y = W @ X, Y : mxm fp32 matrix
-  W = np.array(W, dtype=np.float32)
-  X = np.array(X, dtype=np.float32)
+    # returns Y = X @ W^T
 
-  assert W.shape == (m, m), "weights must be mxm"
-  assert X.shape == (m, m), "input must be mxm"
+    W = np.array(W, dtype=np.float32)
+    X = np.array(X, dtype=np.float32)
 
-  Y = np.matmul(W, X).astype(np.float32)
+    assert W.shape == (m, m), "weights must be mxm"
+    assert X.shape == (m, m), "input must be mxm"
 
-  return Y
+    Y = np.matmul(X, W.T).astype(np.float32)
+
+    return Y
 
 def bias_add(z, b):
   # emulate bias addition VPU operation
@@ -69,7 +69,7 @@ def forward_pass(W, X, b, X_addr, W_addr, Z_addr, b_addr, Y_addr, ZERO_addr, A_a
   assert b.shape == (m, 1), "bias must be mx1"
 
   Y = weight_mul(W,X)
-  matmul(X_addr, W_addr, Z_addr)
+  matmul(W_addr, X_addr, Z_addr)
   A = np.zeros_like(Y)
   for i in range(len(Y)):
     Y[i] = bias_add(Y[i], b)
@@ -82,7 +82,7 @@ def forward_pass(W, X, b, X_addr, W_addr, Z_addr, b_addr, Y_addr, ZERO_addr, A_a
   return Y.astype(np.float32), A.astype(np.float32)
 
 
-def loss(Y, Y_prime, A_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_0125, dA_addr, m=4):
+def loss(Y, Y_prime, Y_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_0125, dA_addr, m=4):
   # given output Y from forward pass and target Y_prime, compute MSE l and 
   # gradient of loss wrt A (activated output)
   # Y, Y_prime : mxm fp32 matrix
@@ -98,7 +98,7 @@ def loss(Y, Y_prime, A_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, co
   diff = Y - Y_prime # VPU sub op
   squared = np.square(diff) # VPU mul op
   for i in range(m * m):
-    sub(A_addr + i, Y_prime_addr + i, diff_addr + i)
+    sub(Y_addr + i, Y_prime_addr + i, diff_addr + i)
     mul(diff_addr+i, diff_addr+i, squared_addr+i)
 
   l = np.sum(squared) # element-by-element running sum w VPU add op
@@ -121,7 +121,7 @@ def relu_derivative_software(z, m=4):
   z = np.array(z, dtype=np.float32)
   return (z>0).astype(np.float32)
 
-def backward_pass(W, X, b, Z, dA, Z_addr, ZERO_addr, relu_deriv_addr, dA_addr, dZ_addr, X_addr, X_addr_transposed, dW_addr,const_addr_025, db_addr, W_addr, W_addr_transposed, dX_addr, m=4):
+def backward_pass(W, X, b, Y, dA, Y_addr, ZERO_addr, relu_deriv_addr, dA_addr, dZ_addr, X_addr, dW_addr,const_addr_025, db_addr, W_addr, W_addr_transposed, dX_addr, m=4):
   # given weight, input, bias, output, gradient, perform MLP backward pass
   # W, X, Z, dA : 4x4 fp32 matrices
   # b : 4x1 fp32 vector
@@ -132,20 +132,15 @@ def backward_pass(W, X, b, Z, dA, Z_addr, ZERO_addr, relu_deriv_addr, dA_addr, d
 
   dZ = np.zeros_like(dA)
   for i in range(len(dA)):
-    dZ[i] = dA[i] * relu_derivative_software(Z[i])
-    relu_derivative(Z_addr + i, ZERO_addr , relu_deriv_addr + i)
+    dZ[i] = dA[i] * relu_derivative_software(Y[i])
+    relu_derivative(Y_addr + i, ZERO_addr , relu_deriv_addr + i)
     mul( dA_addr + i, relu_deriv_addr + i, dZ_addr + i)
 
   #traspose the matrix
   dW = np.zeros_like(W)
   dW = (0.25 * dZ @ X.T).astype(np.float32) 
-  for i in range(m):
-    for j in range(m):
-        src = X_addr    + j*m + i   # X[j,i]
-        dst = X_addr_transposed  + i*m + j   # X_T[i,j]
-        add(src, ZERO_addr, dst)
 
-  matmul(dZ_addr, X_addr_transposed, dW_addr)
+  matmul(X_addr, dZ_addr, dW_addr)
   for i in range(m*m):    # 16 iterations for a 4×4
     mul(dW_addr + i, const_addr_025, dW_addr + i)
 
@@ -167,7 +162,7 @@ def backward_pass(W, X, b, Z, dA, Z_addr, ZERO_addr, relu_deriv_addr, dA_addr, d
     mul(db_addr + i, const_addr_025, db_addr + i)
   
   dX = np.zeros_like(X)
-  dX = (W.T @ dZ).astype(np.float32)
+  dX = (dZ @ W).astype(np.float32)
   # for i in range(m):  # rows of dX
   #   for j in range(m):  # columns of dX  
   #     # temp_sum_addr = 0xF200 + i*m + j
@@ -187,13 +182,13 @@ def backward_pass(W, X, b, Z, dA, Z_addr, ZERO_addr, relu_deriv_addr, dA_addr, d
   #     # dX_element_addr = dX_addr + i*m*4 + j*4
   #     # log_instruction("mov", temp_sum_addr, dX_element_addr)
 
-  #traspose the matrix
+  #traspose the weight matrix
   for i in range(m):
     for j in range(m):
         src = W_addr    + j*m + i   # X[j,i]
         dst = W_addr_transposed  + i*m + j   # X_T[i,j]
         add(src, ZERO_addr, dst)
-  matmul(dZ_addr, W_addr_transposed, dX_addr)
+  matmul(W_addr_transposed, dZ_addr, dX_addr)
   
   return dW.astype(np.float32), db.astype(np.float32), dX.astype(np.float32)
 
@@ -218,9 +213,9 @@ def run_complete_mlp_example():
     W_addr = mem.alloc("W", m*m)
     Z_addr = mem.alloc("Z", m*m) # Z = W @ X
 
-    X_addr_transposed = mem.alloc("X.T", m*m)
+    # X_addr_transposed = mem.alloc("X.T", m*m)
     W_addr_transposed = mem.alloc("W.T", m*m)
-    # in row-major form, each row of Z would span, e.g., [2000, 2000+4*M]
+
     b_addr = mem.alloc("b", m)
     Y_addr = mem.alloc("Y", m*m) # Y = Z+b
     A_addr = mem.alloc("A", m*m)# A = f(Y)
@@ -236,6 +231,7 @@ def run_complete_mlp_example():
     diff_addr = mem.alloc("diff", m*m)  # Y - Y_prime
     squared_addr = mem.alloc("sqaured", m*m)  # squared differences
     sum_addr = mem.alloc("sum", m*m)  # sum for loss
+    load(sum_addr, [0.0])
     loss_addr = mem.alloc("loss", 1)  # final loss value
     relu_deriv_addr = mem.alloc("relu_deriv", m*m)  # ReLU derivatives
 
@@ -254,7 +250,8 @@ def run_complete_mlp_example():
     load(W_addr, W)
     load(X_addr, X)
     load(b_addr, b)
-    Y_prime = np.random.randn(m, m).astype(np.float32)  
+    Y_prime = np.random.randn(m, m).astype(np.float32)
+    load(Y_prime_addr, Y_prime)  
 
     print(f"\n=== Generating MLP instructions ===")
     
@@ -262,40 +259,56 @@ def run_complete_mlp_example():
     print(f"W shape: {W.shape}")
     print(f"X shape: {X.shape}") 
     print(f"b shape: {b.shape}")
+    print(f"W: {W}")
+    print(f"X: {X}")
+    print(f"b: {b}")
     print(f"Y_prime shape: {Y_prime.shape}")
     
     # forward pass
     print("\n--- Running Forward Pass ---")
-    Z, A = forward_pass(W, X, b, X_addr, W_addr, Z_addr, b_addr, Y_addr, ZERO_addr, A_addr, m)
-    print(f"Forward pass completed. Z shape: {Z.shape}, A shape: {A.shape}")
+    Y, A = forward_pass(W, X, b, X_addr, W_addr, Z_addr, b_addr, Y_addr, ZERO_addr, A_addr, m)
+    print(f"Forward pass completed. Y shape: {Y.shape}, A shape: {A.shape}")
+    print(f"Y: {Y}")
+    print(f"A: {A}")
     
     # loss computation
     print("\n--- Computing Loss ---")
-    loss_value, dA = loss(A, Y_prime, A_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_0125, dA_addr, m=4)
+    loss_value, dA = loss(Y, Y_prime, Y_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_0125, dA_addr, m=4)
     print(f"Loss: {loss_value:.6f}")
+    print(f"dA: {dA}")
     print(f"dA shape: {dA.shape}")
     # backward pass
     print("\n--- Running Backward Pass ---")
-    dW, db, dX = backward_pass(W, X, b, Z, dA, Z_addr, ZERO_addr, relu_deriv_addr, dA_addr, dZ_addr, X_addr, X_addr_transposed, dW_addr,const_addr_025, db_addr, W_addr, W_addr_transposed, dX_addr, m=4)
+    dW, db, dX = backward_pass(W, X, b, Y, dA, Y_addr, ZERO_addr, relu_deriv_addr, dA_addr, dZ_addr, X_addr, dW_addr,const_addr_025, db_addr, W_addr, W_addr_transposed, dX_addr, m=4)
     print(f"Backward pass completed.")
     print(f"dW shape: {dW.shape}")
     print(f"db shape: {db.shape}") 
     print(f"dX shape: {dX.shape}")
 
+    store(X_addr, m*m, "X")
+    store(W_addr, m*m, "W")
+    store(Z_addr, m*m, "Z")
+    store(W_addr_transposed, m*m, "W.T")
+    store(Y_addr, m*m, "Y")
+    store(A_addr, m*m, "A")
+    store(dA_addr, m*m, "dA")
+    store(dZ_addr, m*m, "dZ")
+    store(relu_deriv_addr, m*m, "relu_deriv")
     store(dW_addr, m*m , "dW")
-    store(db_addr, m*m , "db")
+    store(db_addr, m , "db")
     store(dX_addr, m*m , "dX")
+    store(loss_addr, 1, "loss")
     
     
     return loss_value, dW, db, dX
 
 if __name__ == "__main__":
     # complete tpu mlp
-    # loss_val, dW, db, dX = run_complete_mlp_example()
-    # print(f"Loss: {loss_val:.6f}")
-    # print(f"dW: {dW}")
-    # print(f"db: {db}")
-    # print(f"dX: {dX}")
+    loss_val, dW, db, dX = run_complete_mlp_example()
+    print(f"Loss: {loss_val:.6f}")
+    print(f"dW: {dW}")
+    print(f"db: {db}")
+    print(f"dX: {dX}")
 
     # testing vpu vadd
     # test_addr = mem.alloc("test", 1)
@@ -307,22 +320,23 @@ if __name__ == "__main__":
     # store(output_addr, 1, "output")
 
     # testing systolic array
-    X_addr = mem.alloc("X", 16)
-    W_addr = mem.alloc("W", 16)
-    Z_addr = mem.alloc("Z", 16) # Z = W @ X
+    # X_addr = mem.alloc("X", 16)
+    # W_addr = mem.alloc("W", 16)
+    # Z_addr = mem.alloc("Z", 16) # Z = W @ X
 
-    load(X_addr, [1, 2, 3, 4,
-                  5, 6, 7, 8,
-                  9, 1, 2, 3,
-                  4, 5, 6, 7])
+    # load(W_addr, [[1, 0, 2, 1,
+    #                 3, 1, 0, 4,
+    #                 5, 2, 3, 0,
+    #                 4, 1, 3, 2]])
     
-    load(W_addr, [[1, 0, 2, 1,
-                    3, 1, 0, 4,
-                    5, 2, 1, 0,
-                    1, 1, 3, 2]])
+    # load(X_addr, [1, 2, 3, 4,
+    #               1, 6, 7, 8,
+    #               9, 1, 2, 3,
+    #               4, 5, 6, 3])
     
-    matmul(X_addr, W_addr, Z_addr)
-    store(Z_addr, 16, 'output')
+    
+    # matmul(W_addr, X_addr, Z_addr)
+    # store(Z_addr, 16, 'output')
 
 
     
