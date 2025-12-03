@@ -303,6 +303,12 @@ def run_complete_mlp_example():
     return loss_value, dW, db, dX
 
 if __name__ == "__main__":
+<<<<<<< HEAD
+=======
+
+    ### WRITE CODE BELOW
+
+>>>>>>> origin/main
     # complete tpu mlp
     loss_val, dW, db, dX = run_complete_mlp_example()
     print(f"Loss: {loss_val:.6f}")
@@ -339,6 +345,10 @@ if __name__ == "__main__":
     # store(Z_addr, 16, 'output')
 
 
+<<<<<<< HEAD
+=======
+    ### WRITE CODE ABOVE
+>>>>>>> origin/main
     
     #get instructions
     global instruction_log
