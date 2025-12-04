@@ -3,7 +3,7 @@ The Cornell TPU; or maybe the Big Red Unit (BRU)?
 
 ## How to use Cornell TPU:
 
-1. Enter virtual environment : `./venv/Scripts/Activate.ps1`
+1. Create virtual environment then enter it : `python -m venv venv` , `./venv/Scripts/Activate.ps1` (Windows commands)
 1. Enter compiler folder: `cd compiler`
 2. Write your code in frontend/tpu_frontend.py file in main function where it says write code (you can use whatever functions are exposed in tpu_txt.py file in backend)
 3. Run frontend:  `python -m frontend.tpu_frontend` (generates IR in mlp_instruction_trace.txt)
