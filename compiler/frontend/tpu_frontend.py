@@ -74,9 +74,10 @@ def forward_pass(W, X, b, X_addr, W_addr, Z_addr, b_addr, Y_addr, ZERO_addr, A_a
   for i in range(len(Y)):
     Y[i] = bias_add(Y[i], b)
     A[i] = relu_op(Y[i])
-  for i in range(m * m):
-    add(Z_addr+i, b_addr+i, Y_addr+i)
-    relu(Y_addr+i, ZERO_addr,  A_addr+i) #  just for easier parsing, relu dosent need second address
+  for i in range(m):
+    for j in range(m):
+      add(Z_addr + (i*m + j), b_addr+j, Y_addr + (i*m + j))
+      relu(Y_addr + (i*m + j), ZERO_addr,  A_addr + (i*m + j)) #  just for easier parsing, relu dosent need second address
 
   # the above loop implementation is to account for the functional limits of the VPU
   return Y.astype(np.float32), A.astype(np.float32)
@@ -97,6 +98,8 @@ def loss(Y, Y_prime, Y_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, co
 
   diff = Y - Y_prime # VPU sub op
   squared = np.square(diff) # VPU mul op
+  print(f"diff: {diff}")
+  print(f"squared: {squared}")
   for i in range(m * m):
     sub(Y_addr + i, Y_prime_addr + i, diff_addr + i)
     mul(diff_addr+i, diff_addr+i, squared_addr+i)
@@ -237,10 +240,10 @@ def run_complete_mlp_example():
 
     # constants
     const_addr_0625 = mem.alloc("const_addr_0625", 1)
-    const_addr_0125 = mem.alloc("const_addr_0125", 1)
+    const_addr_125 = mem.alloc("const_addr_0125", 1)
     const_addr_025 = mem.alloc("const_addr_025", 1)
-    load(const_addr_0625, [0.625])
-    load(const_addr_0125, [0.125])
+    load(const_addr_0625, [0.0625])
+    load(const_addr_125, [0.125])
     load(const_addr_025, [0.25])
 
   
@@ -273,7 +276,7 @@ def run_complete_mlp_example():
     
     # loss computation
     print("\n--- Computing Loss ---")
-    loss_value, dA = loss(Y, Y_prime, Y_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_0125, dA_addr, m=4)
+    loss_value, dA = loss(Y, Y_prime, Y_addr, Y_prime_addr, diff_addr, squared_addr, sum_addr, const_addr_0625, loss_addr, const_addr_125, dA_addr, m=4)
     print(f"Loss: {loss_value:.6f}")
     print(f"dA: {dA}")
     print(f"dA shape: {dA.shape}")
@@ -288,9 +291,12 @@ def run_complete_mlp_example():
     store(X_addr, m*m, "X")
     store(W_addr, m*m, "W")
     store(Z_addr, m*m, "Z")
+    store(b_addr,m , "b" )
     store(W_addr_transposed, m*m, "W.T")
     store(Y_addr, m*m, "Y")
     store(A_addr, m*m, "A")
+    store(diff_addr, m*m, "diff")
+    store(squared_addr, m*m, "sqaured")
     store(dA_addr, m*m, "dA")
     store(dZ_addr, m*m, "dZ")
     store(relu_deriv_addr, m*m, "relu_deriv")
@@ -340,7 +346,6 @@ if __name__ == "__main__":
     
     # matmul(W_addr, X_addr, Z_addr)
     # store(Z_addr, 16, 'output')
-
 
     ### WRITE CODE ABOVE
     
