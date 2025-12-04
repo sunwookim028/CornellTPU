@@ -7,16 +7,11 @@ def log_instruction(op, *operands):
   instruction = f"{op} {', '.join(map(str, operands))}"
   instruction_log.append(instruction)
 
-<<<<<<< HEAD
-def matmul(X, W, Z, m=4):
-    log_instruction("matmul", X, W, Z)
-=======
 def matmul(W, X, Z, m=4):
     """
     Given two 4x4 input matrices W and X. Does X times W(transposed)
     """
     log_instruction("matmul", W, X, Z)
->>>>>>> origin/main
 
 def load(start_addr, np_array):
     """

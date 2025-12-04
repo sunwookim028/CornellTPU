@@ -1,5 +1,4 @@
 load 0, 1, [0.0]
-<<<<<<< HEAD
 load 266, 1, [0.625]
 load 267, 1, [0.125]
 load 268, 1, [0.25]
@@ -367,4 +366,3 @@ store 149, 16, dW
 store 165, 4, db
 store 169, 16, dX
 store 233, 1, loss
->>>>>>> origin/main
