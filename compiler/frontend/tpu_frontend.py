@@ -15,6 +15,7 @@ weight_matrix (for N=4): [W00, W01, W02, W03, ... , W30, W31, W32, W33] (16 elem
 import numpy as np
 from frontend.tpu_memory_allocator import allocator as mem
 from backend.tpu_txt import load, store, matmul, add, sub, mul, relu, relu_derivative, get_instruction_log
+import time
 
 m = 4
 
@@ -313,11 +314,14 @@ if __name__ == "__main__":
     ### WRITE CODE BELOW
 
     # complete tpu mlp
+    t0 = time.perf_counter()
     loss_val, dW, db, dX = run_complete_mlp_example()
     print(f"Loss: {loss_val:.6f}")
     print(f"dW: {dW}")
     print(f"db: {db}")
     print(f"dX: {dX}")
+    time_taken = time.perf_counter() - t0
+    print(f"Software MLP total time: {time_taken*1000:.3f} ms")
 
     # testing vpu vadd
     # test_addr = mem.alloc("test", 1)

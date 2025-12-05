@@ -92,9 +92,20 @@ def main():
 
     base = 0x0000
 
+    bench = {
+        "load_time": 0.0,
+        "write_iram_time": 0.0,
+        "compute_time": 0.0,
+        "store_time": 0.0,
+        "total_time": 0.0
+    }
+
+    overall_start = time.perf_counter()
+
+    t0 = time.perf_counter()
     for (addr, length, value) in LOADS:
         write_bram(mmio, dma, addr, np.array(value, dtype=np.float32).reshape(-1))
-    
+    bench["load_time"] = time.perf_counter() - t0
     print("loading data complete")
 
     instrs = []
@@ -104,6 +115,9 @@ def main():
     instrs_np = np.array(instrs, dtype=np.uint64)
 
     instr_buf = allocate(shape=instrs_np.shape, dtype=np.uint64)
+    
+    t0 = time.perf_counter()
+    
     wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["addr_ram"], base)
     mmio.write(REG_ADDR["length"], len(instrs_np))
@@ -113,21 +127,36 @@ def main():
     dma.sendchannel.transfer(instr_buf)
     dma.sendchannel.wait()
     wait_for_flag(mmio, "instr_ready", 1)
+
+    bench["write_iram_time"] = time.perf_counter() - t0
     print("writing instructions complete")
+
     mmio.write(REG_ADDR["tpu_mode"], 0)
     instr_buf.freebuffer()
 
 
+    t0 = time.perf_counter()
+
     wait_for_flag(mmio, "instr_ready", 1)
     mmio.write(REG_ADDR["tpu_mode"], COMPUTE)
     wait_for_flag(mmio, "instr_ready", 1)
+
+    bench["compute_time"] = time.perf_counter() - t0
     print("compute complete")
+
     mmio.write(REG_ADDR["tpu_mode"], 0)
 
+    t0 = time.perf_counter()
     for (addr, length, label) in STORES:
         out = read_bram(mmio, dma, addr, length)
         print(f"{label} = {out}")
+    bench["store_time"] = time.perf_counter() - t0
     print("storing complete")
+
+    bench["total_time"] = time.perf_counter() - overall_start
+    print("===== BENCHMARK RESULTS =====")
+    for key, val in bench.items():
+        print(f"{key}: {val*1000:.3f} ms")
 
 if __name__ == "__main__":
     main()
