@@ -309,7 +309,7 @@ def run_complete_mlp_example():
     return loss_value, dW, db, dX
 
 if __name__ == "__main__":
-
+    
     ### WRITE CODE BELOW
 
     # complete tpu mlp
@@ -346,6 +346,30 @@ if __name__ == "__main__":
     
     # matmul(W_addr, X_addr, Z_addr)
     # store(Z_addr, 16, 'output')
+
+    # testing relu deriv
+    # a = mem.alloc("a", 1)
+    # b = mem.alloc("b", 1)
+    # c = mem.alloc("c", 1)
+    # ZERO = mem.alloc("ZERO", 1)
+
+    # a_relu_deriv = mem.alloc("a", 1)
+    # b_relu_deriv = mem.alloc("b", 1)
+    # c_relu_deriv = mem.alloc("c", 1)
+
+    # load(a, [-3.0])
+    # load(b, [0.0])
+    # load(c, [3.0])
+    # load(ZERO, [0.0])
+
+    # relu_derivative(a, ZERO, a_relu_deriv)
+    # relu_derivative(b, ZERO, b_relu_deriv)
+    # relu_derivative(c, ZERO, c_relu_deriv)
+
+    # store(a_relu_deriv, 1, "a_relu_deriv")
+    # store(b_relu_deriv, 1, "b_relu_deriv")
+    # store(c_relu_deriv, 1, "c_relu_deriv")
+
 
     ### WRITE CODE ABOVE
     
