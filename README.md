@@ -3,17 +3,17 @@ The Cornell TPU; or maybe the Big Red Unit (BRU)?
 
 ## How to use Cornell TPU:
 
-1. Create virtual environment then enter it : `python -m venv venv` , `./venv/Scripts/Activate.ps1` (Windows commands)
 1. Enter compiler folder: `cd compiler`
-2. Write your code in frontend/tpu_frontend.py file in main function where it says write code (you can use whatever functions are exposed in tpu_txt.py file in backend)
-3. Run frontend:  `python -m frontend.tpu_frontend` (generates IR in mlp_instruction_trace.txt and prints Memory map of your code onto terminal)
-4. Run backend: `python backend/assembler.py mlp_instruction_trace.txt tpu_instructions.txt`  (converts IR in mlp_instruction_trace.txt into instructions for TPU in tpu_instructions.txt and auto-generates pynq host.py file. Packages both alongside bitstream in tpu_deploy folder)
-5. Scp tpu_deploy folder onto board: `scp -r .\tpu_deploy\ xilinx@132.236.59.64:~` , (enter password), (you need to be connected to ECE Departmental VPN)
-6. SSH onto board: `ssh xilinx@132.236.59.64` (enter password)
-7. Go into folder copied: `cd tpu_deploy`
-8. Run code on board: `sudo python3 host.py CornellTPU.bit tpu_instructions.txt`
-9. Whatever data you requested in store commands will be printed on terminal.
-10. Once you are done you can delete folder from board:  `cd ..` ,  `rm -rf tpu_deploy`
+2. Create virtual environment then enter it : `python -m venv venv` , `./venv/Scripts/Activate.ps1` , install numpy `pip install numpy` (Windows commands)
+3. Write your code in frontend/tpu_frontend.py file in main function where it says write code (you can use whatever functions are exposed in tpu_txt.py file in backend)
+4. Run frontend:  `python -m frontend.tpu_frontend` (generates IR in mlp_instruction_trace.txt and prints Memory map of your code onto terminal)
+5. Run backend: `python backend/assembler.py mlp_instruction_trace.txt tpu_instructions.txt`  (converts IR in mlp_instruction_trace.txt into instructions for TPU in tpu_instructions.txt and auto-generates pynq host.py file. Packages both alongside bitstream in tpu_deploy folder)
+6. Scp tpu_deploy folder onto board: `scp -r .\tpu_deploy\ xilinx@132.236.59.64:~` , (enter password), (you need to be connected to ECE Departmental VPN)
+7. SSH onto board: `ssh xilinx@132.236.59.64` (enter password)
+8. Go into folder copied: `cd tpu_deploy`
+9. Run code on board: `sudo python3 host.py CornellTPU.bit tpu_instructions.txt`
+10. Whatever data you requested in store commands will be printed on terminal.
+11. Once you are done you can delete folder from board:  `cd ..` ,  `rm -rf tpu_deploy`
 
 
 ## List of instructions Cornell TPU currently supports:

@@ -54,28 +54,28 @@ def sub(X, Y, Z):
     Subtracts data stored at address Y from data stored at address X and stores result in address Z
     *Z = *X - *Y
     """
-   log_instruction("sub", X, Y, Z)
+    log_instruction("sub", X, Y, Z)
 
 def mul(X, Y, Z):
     """
     Multiplies data stored at address X and address Y and stores result in address Z
     *Z = (*X) * (*Y)
     """
-   log_instruction("mul", X, Y, Z)
+    log_instruction("mul", X, Y, Z)
 
 def relu(X, Zero_addr, Y):
     """
     Applies relu function on data stored at address X and stores result in address Y
     *Y = relu(*X)
     """
-   log_instruction("relu", X, Zero_addr, Y)
+    log_instruction("relu", X, Zero_addr, Y)
 
 def relu_derivative(X, Zero_addr, Y):
     """
     Applies relu derivative function on data stored at address X and stores result in address Y
     *Y = relu'(*X)
     """
-   log_instruction("relu_derivative", X, Zero_addr, Y)
+    log_instruction("relu_derivative", X, Zero_addr, Y)
 
 def get_instruction_log():
    return instruction_log
