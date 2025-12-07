@@ -29,3 +29,12 @@ The Cornell TPU; or maybe the Big Red Unit (BRU)?
 - relu_derivative(X, Zero_addr, Y)
 
 Information on specific details for each function are defined in function headers for each function in compiler/backend/tpu_txt.py
+
+
+## How to set up system to modify RTL:
+
+[Video Tutorial](https://youtu.be/FugwKTFz97M?si=z53qOrX0XwX7BtY8)
+
+
+## Current Benchmark
+
