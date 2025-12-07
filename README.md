@@ -38,3 +38,4 @@ Information on specific details for each function are defined in function header
 
 ## Current Benchmark
 
+![current_benchmark_tpu](https://github.com/user-attachments/assets/9f28f84d-d3f7-4f8c-beaf-cbfe54aa8cf7)
