@@ -154,49 +154,49 @@ def backward_pass(W, X, b, Y, dA, Y_addr, ZERO_addr, relu_deriv_addr, dA_addr, d
 
   db = np.zeros_like(b)
   db = (0.25 * np.sum(dZ, axis=1, keepdims=True)).astype(np.float32)
-  # # for i in range(m):
-  # #   # log_instruction("add", dZ_addr + i*m*4, db_addr + i*4)
-  # #   # db[i] = db[i] + dZ[k,i]
-  # #   log_instruction("add", dZ_addr + i*m*4, db_addr + i*4, db_addr + i*4)
-  # #   log_instruction("mul", db_addr + i*4, const_addr_025, db_addr + i*4)
-
   # for i in range(m):
-  #   for k in range(m):
-  #       dz_elem_addr = dZ_addr + i*m + k
-  #       db_elem_addr = db_addr + i
-  #       add(dz_elem_addr, db_elem_addr, db_elem_addr)
+  #   # log_instruction("add", dZ_addr + i*m*4, db_addr + i*4)
+  #   # db[i] = db[i] + dZ[k,i]
+  #   log_instruction("add", dZ_addr + i*m*4, db_addr + i*4, db_addr + i*4)
+  #   log_instruction("mul", db_addr + i*4, const_addr_025, db_addr + i*4)
 
-  # for i in range(m):
-  #   mul(db_addr + i, const_addr_025, db_addr + i)
+  for i in range(m):
+    for k in range(m):
+        dz_elem_addr = dZ_addr + i*m + k
+        db_elem_addr = db_addr + i
+        add(dz_elem_addr, db_elem_addr, db_elem_addr)
+
+  for i in range(m):
+    mul(db_addr + i, const_addr_025, db_addr + i)
   
   dX = np.zeros_like(X)
   dX = (dZ @ W).astype(np.float32)
-  # # for i in range(m):  # rows of dX
-  # #   for j in range(m):  # columns of dX  
-  # #     # temp_sum_addr = 0xF200 + i*m + j
-  # #     dX_element_addr = dX_addr + i*m + j
+  # for i in range(m):  # rows of dX
+  #   for j in range(m):  # columns of dX  
+  #     # temp_sum_addr = 0xF200 + i*m + j
+  #     dX_element_addr = dX_addr + i*m + j
 
-  # #     for k in range(m):
-  # #         # W[k,i] is at address: W_addr + k*m*4 + i*4
-  # #         w_element_addr = W_addr + k*m + i
-  # #         # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
-  # #         dz_element_addr = dZ_addr + k*m + j
-  # #         product_addr = 0xF300 + k
+  #     for k in range(m):
+  #         # W[k,i] is at address: W_addr + k*m*4 + i*4
+  #         w_element_addr = W_addr + k*m + i
+  #         # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
+  #         dz_element_addr = dZ_addr + k*m + j
+  #         product_addr = 0xF300 + k
           
-  # #         log_instruction("mul", w_element_addr, dz_element_addr, product_addr)
-  # #         log_instruction("add", dX_element_addr, product_addr, dX_element_addr)
+  #         log_instruction("mul", w_element_addr, dz_element_addr, product_addr)
+  #         log_instruction("add", dX_element_addr, product_addr, dX_element_addr)
       
-  # #     # store result in dX[i,j]
-  # #     # dX_element_addr = dX_addr + i*m*4 + j*4
-  # #     # log_instruction("mov", temp_sum_addr, dX_element_addr)
+  #     # store result in dX[i,j]
+  #     # dX_element_addr = dX_addr + i*m*4 + j*4
+  #     # log_instruction("mov", temp_sum_addr, dX_element_addr)
 
-  # #traspose the weight matrix
-  # for i in range(m):
-  #   for j in range(m):
-  #       src = W_addr    + j*m + i   # X[j,i]
-  #       dst = W_addr_transposed  + i*m + j   # X_T[i,j]
-  #       add(src, ZERO_addr, dst)
-  # matmul(W_addr_transposed, dZ_addr, dX_addr)
+  #traspose the weight matrix
+  for i in range(m):
+    for j in range(m):
+        src = W_addr    + j*m + i   # X[j,i]
+        dst = W_addr_transposed  + i*m + j   # X_T[i,j]
+        add(src, ZERO_addr, dst)
+  matmul(W_addr_transposed, dZ_addr, dX_addr)
   
   return dW.astype(np.float32), db.astype(np.float32), dX.astype(np.float32)
 
@@ -304,7 +304,7 @@ def run_complete_mlp_example():
     store(squared_addr, m*m, "sqaured")
     store(dA_addr, m*m, "dA")
     store(dZ_addr, m*m, "dZ")
-    store(relu_deriv_addr, m*m, "relu_deriv")
+    # store(relu_deriv_addr, m*m, "relu_deriv")
     store(dW_addr, m*m , "dW")
     store(db_addr, m , "db")
     store(dX_addr, m*m , "dX")

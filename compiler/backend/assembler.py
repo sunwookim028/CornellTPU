@@ -2,6 +2,7 @@ import sys
 import ast
 import os
 import shutil
+import numpy as np
 
 HOST_TEMPLATE = """
 import argparse
@@ -146,13 +147,24 @@ def main():
 
     mmio.write(REG_ADDR["tpu_mode"], 0)
 
-    t0 = time.perf_counter()
-    for (addr, length, label) in STORES:
-        out = read_bram(mmio, dma, addr, length)
-        print(f"{label} = {out}")
-    bench["store_time"] = time.perf_counter() - t0
-    print("storing complete")
+    
+    # Compute overall read window
+    min_addr = min(addr for (addr, _, _) in STORES)
+    max_addr = max(addr + (length) for (addr, length, _) in STORES)
+    total_len = max_addr - min_addr
 
+    # Single DMA read
+    t0 = time.perf_counter()
+    merged = read_bram(mmio, dma, min_addr, total_len + 1) # idk why but the +1 fixes the bus error bug somehow
+    bench["store_time"] = time.perf_counter() - t0
+
+    for (addr, length, label) in STORES:
+        start = addr - min_addr
+        end = start + length
+        out = merged[start:end]
+        print(f"{label} = {out}")
+
+    print("storing complete")
     bench["total_time"] = time.perf_counter() - overall_start
     print("===== BENCHMARK RESULTS =====")
     for key, val in bench.items():
@@ -186,6 +198,11 @@ OPCODE_MAX = (1 << OPCODE_BITS) - 1
 
 LOADS = []
 STORES = []
+
+LOADS_OPTIMIZED = []
+STORES_OPTIMIZED = []
+
+MEMORY_SIZE = 8192  
 
 
 def check_addr(addr: int, label: str):
@@ -293,6 +310,19 @@ def assemble_line(line: str, matmul_len: int = 16):
 
     raise ValueError(f"Unknown op: {op}")
 
+def generate_memory_image(LOADS):
+
+    max_addr = 0
+    for addr, length, _ in LOADS:
+        max_addr = max(max_addr, addr + length)
+
+    memory = [0.0] * max_addr
+
+    for addr, length, values in LOADS:
+        memory[addr:addr+length] = values
+
+    return memory, max_addr
+
 def generate_host_py(host_path, loads, stores):
     with open(host_path, "w") as f:
         template = HOST_TEMPLATE.replace(
@@ -323,7 +353,12 @@ def assemble_file(input_path: str, output_path: str, matmul_len: int = 16):
 
     print(f"Assembly complete. Wrote {len(assembled_words)} instructions to {output_path}")
 
-    generate_host_py("host.py", LOADS, STORES)
+    # optimization with linear memory allocation
+    data_stream, size = generate_memory_image(LOADS)
+
+    loads = [(0, size, data_stream)]
+
+    generate_host_py("host.py", loads, STORES)
 
     # deploys files to folder tpu_deploy
     deploy_dir = os.path.join(os.path.dirname(output_path), "tpu_deploy")
