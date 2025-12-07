@@ -137,62 +137,66 @@ def backward_pass(W, X, b, Y, dA, Y_addr, ZERO_addr, relu_deriv_addr, dA_addr, d
   dZ = np.zeros_like(dA)
   for i in range(len(dA)):
     dZ[i] = dA[i] * relu_derivative_software(Y[i])
+     
+  for i in range(m * m):
     relu_derivative(Y_addr + i, ZERO_addr , relu_deriv_addr + i)
     mul( dA_addr + i, relu_deriv_addr + i, dZ_addr + i)
 
   #traspose the matrix
+  print(f"dZ:{dZ}")
   dW = np.zeros_like(W)
-  dW = (0.25 * dZ @ X.T).astype(np.float32) 
+  # dW = (0.25 * dZ @ X.T).astype(np.float32) 
+  dW = (dZ @ X.T).astype(np.float32) 
 
   matmul(X_addr, dZ_addr, dW_addr)
-  for i in range(m*m):    # 16 iterations for a 4×4
-    mul(dW_addr + i, const_addr_025, dW_addr + i)
+  # for i in range(m*m):    # 16 iterations for a 4×4
+  #   mul(dW_addr + i, const_addr_025, dW_addr + i)
 
   db = np.zeros_like(b)
   db = (0.25 * np.sum(dZ, axis=1, keepdims=True)).astype(np.float32)
+  # # for i in range(m):
+  # #   # log_instruction("add", dZ_addr + i*m*4, db_addr + i*4)
+  # #   # db[i] = db[i] + dZ[k,i]
+  # #   log_instruction("add", dZ_addr + i*m*4, db_addr + i*4, db_addr + i*4)
+  # #   log_instruction("mul", db_addr + i*4, const_addr_025, db_addr + i*4)
+
   # for i in range(m):
-  #   # log_instruction("add", dZ_addr + i*m*4, db_addr + i*4)
-  #   # db[i] = db[i] + dZ[k,i]
-  #   log_instruction("add", dZ_addr + i*m*4, db_addr + i*4, db_addr + i*4)
-  #   log_instruction("mul", db_addr + i*4, const_addr_025, db_addr + i*4)
+  #   for k in range(m):
+  #       dz_elem_addr = dZ_addr + i*m + k
+  #       db_elem_addr = db_addr + i
+  #       add(dz_elem_addr, db_elem_addr, db_elem_addr)
 
-  for i in range(m):
-    for k in range(m):
-        dz_elem_addr = dZ_addr + i*m + k
-        db_elem_addr = db_addr + i
-        add(dz_elem_addr, db_elem_addr, db_elem_addr)
-
-  for i in range(m):
-    mul(db_addr + i, const_addr_025, db_addr + i)
+  # for i in range(m):
+  #   mul(db_addr + i, const_addr_025, db_addr + i)
   
   dX = np.zeros_like(X)
   dX = (dZ @ W).astype(np.float32)
-  # for i in range(m):  # rows of dX
-  #   for j in range(m):  # columns of dX  
-  #     # temp_sum_addr = 0xF200 + i*m + j
-  #     dX_element_addr = dX_addr + i*m + j
+  # # for i in range(m):  # rows of dX
+  # #   for j in range(m):  # columns of dX  
+  # #     # temp_sum_addr = 0xF200 + i*m + j
+  # #     dX_element_addr = dX_addr + i*m + j
 
-  #     for k in range(m):
-  #         # W[k,i] is at address: W_addr + k*m*4 + i*4
-  #         w_element_addr = W_addr + k*m + i
-  #         # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
-  #         dz_element_addr = dZ_addr + k*m + j
-  #         product_addr = 0xF300 + k
+  # #     for k in range(m):
+  # #         # W[k,i] is at address: W_addr + k*m*4 + i*4
+  # #         w_element_addr = W_addr + k*m + i
+  # #         # dZ[k,j] is at address: dZ_addr + k*m*4 + j*4  
+  # #         dz_element_addr = dZ_addr + k*m + j
+  # #         product_addr = 0xF300 + k
           
-  #         log_instruction("mul", w_element_addr, dz_element_addr, product_addr)
-  #         log_instruction("add", dX_element_addr, product_addr, dX_element_addr)
+  # #         log_instruction("mul", w_element_addr, dz_element_addr, product_addr)
+  # #         log_instruction("add", dX_element_addr, product_addr, dX_element_addr)
       
-  #     # store result in dX[i,j]
-  #     # dX_element_addr = dX_addr + i*m*4 + j*4
-  #     # log_instruction("mov", temp_sum_addr, dX_element_addr)
+  # #     # store result in dX[i,j]
+  # #     # dX_element_addr = dX_addr + i*m*4 + j*4
+  # #     # log_instruction("mov", temp_sum_addr, dX_element_addr)
 
-  #traspose the weight matrix
-  for i in range(m):
-    for j in range(m):
-        src = W_addr    + j*m + i   # X[j,i]
-        dst = W_addr_transposed  + i*m + j   # X_T[i,j]
-        add(src, ZERO_addr, dst)
-  matmul(W_addr_transposed, dZ_addr, dX_addr)
+  # #traspose the weight matrix
+  # for i in range(m):
+  #   for j in range(m):
+  #       src = W_addr    + j*m + i   # X[j,i]
+  #       dst = W_addr_transposed  + i*m + j   # X_T[i,j]
+  #       add(src, ZERO_addr, dst)
+  # matmul(W_addr_transposed, dZ_addr, dX_addr)
   
   return dW.astype(np.float32), db.astype(np.float32), dX.astype(np.float32)
 
@@ -332,24 +336,102 @@ if __name__ == "__main__":
     # add(test_addr, test2_addr, output_addr)
     # store(output_addr, 1, "output")
 
-    # testing systolic array
-    # X_addr = mem.alloc("X", 16)
-    # W_addr = mem.alloc("W", 16)
-    # Z_addr = mem.alloc("Z", 16) # Z = W @ X
+    # testing systolic array - weird bug, only first call to systolic array works
+#     X_addr = mem.alloc("X", 16)
+#     W_addr = mem.alloc("W", 16)
+#     Z_addr = mem.alloc("Z", 16) # Z = W @ X
 
-    # load(W_addr, [[1, 0, 2, 1,
-    #                 3, 1, 0, 4,
-    #                 5, 2, 3, 0,
-    #                 4, 1, 3, 2]])
+#     X2_addr = mem.alloc("X2", 16)
+#     W2_addr = mem.alloc("W2", 16)
+#     Z2_addr = mem.alloc("Z2", 16) # Z = W @ X
+
+#     X3_addr = mem.alloc("X3", 16)
+#     W3_addr = mem.alloc("W3", 16)
+#     Z3_addr = mem.alloc("Z3", 16) # Z = W @ X
+
+#     load(W_addr, [[1, 0, 2, 1,
+#                     3, 1, 0, 4,
+#                     5, 2, 3, 0,
+#                     4, 1, 3, 2]])
     
-    # load(X_addr, [1, 2, 3, 4,
-    #               1, 6, 7, 8,
-    #               9, 1, 2, 3,
-    #               4, 5, 6, 3])
+#     load(X_addr, [1, 2, 3, 4,
+#                   1, 6, 7, 8,
+#                   9, 1, 2, 3,
+#                   4, 5, 6, 3])
+    
+#     load(W2_addr, [-0.45943496, -0.25160107 , 0.33517587, -0.02959188,
+#                    1.4052938 , -0.11233702 , 0.18286541  ,0.32481432,
+#                    0.55792236, -0.4772023  , 0.21521786,  0.73725677,
+#                   -0.09291515 , 1.3898402 , -0.41923222, -0.10105602])
+    
+#     load(X2_addr, [0. ,      0.08841236 , 0.     ,     0.42130554
+#                   ,0.     ,     0.31177416  ,0.3984788  ,0.   ,
+#                   0.    ,      0.09989284  ,0.3254646 , -0.01340536,
+#                   0.  ,       0.   ,      0.   ,      0.        ])
+    
+#     load(W3_addr, [ 0.2880219 ,  0.2094594 ,  0.41569027 ,-0.16226044 , 1.3467894 , -1.2430189,
+#   0.42499632 ,-2.422123 ,   1.6087977,  -0.35568455 , 0.59930944 , 0.3871644,
+#  -1.7807624 , -1.956411    ,0.2889118,   0.5473226 ])
+    
+#     load(X3_addr, [
+#    -0.45943496, -0.25160107 , 0.33517587, -0.02959188 , 1.4052938 , -0.11233702,
+#   0.18286541 , 0.32481432 , 0.55792236, -0.4772023  , 0.21521786 , 0.73725677,
+#  -0.09291515 , 1.3898402 , -0.41923222, -0.10105602
+#     ])
     
     
-    # matmul(W_addr, X_addr, Z_addr)
-    # store(Z_addr, 16, 'output')
+    
+#     matmul(W2_addr, X2_addr, Z2_addr)
+#     matmul(W3_addr, X3_addr, Z3_addr)
+#     matmul(W_addr, X_addr, Z_addr)
+#     store(Z_addr, 16, 'output')
+#     store(Z2_addr, 16, "output2")
+#     store(Z3_addr, 16, "output3")
+
+#     W = np.array([1, 0, 2, 1,
+#                     3, 1, 0, 4,
+#                     5, 2, 3, 0,
+#                     4, 1, 3, 2], dtype=np.float32).reshape(4,4)
+
+#     X = np.array([1, 2, 3, 4,
+#                   1, 6, 7, 8,
+#                   9, 1, 2, 3,
+#                   4, 5, 6, 3], dtype=np.float32).reshape(4,4)
+
+
+#     W2 = np.array([
+#         -0.45943496, -0.25160107 , 0.33517587, -0.02959188,
+#                    1.4052938 , -0.11233702 , 0.18286541  ,0.32481432,
+#                    0.55792236, -0.4772023  , 0.21521786,  0.73725677,
+#                   -0.09291515 , 1.3898402 , -0.41923222, -0.10105602
+#     ], dtype=np.float32).reshape(4,4)
+
+#     X2 = np.array([
+#     -0. ,      0.08841236 , 0.     ,     0.42130554
+#                   ,-0.     ,     0.31177416  ,0.3984788  ,-0.   ,
+#                   -0.    ,      0.09989284  ,0.3254646 , -0.01340536,
+#                   -0.  ,       -0.   ,      -0.   ,      -0.    
+#     ], dtype=np.float32).reshape(4,4)
+
+#     W3 = np.array([ 0.2880219 ,  0.2094594 ,  0.41569027 ,-0.16226044 , 1.3467894 , -1.2430189,
+#   0.42499632 ,-2.422123 ,   1.6087977,  -0.35568455 , 0.59930944 , 0.3871644,
+#  -1.7807624 , -1.956411    ,0.2889118,   0.5473226 ], dtype=np.float32).reshape(4,4)
+
+#     X3 = np.array([
+#    -0.45943496, -0.25160107 , 0.33517587, -0.02959188 , 1.4052938 , -0.11233702,
+#   0.18286541 , 0.32481432 , 0.55792236, -0.4772023  , 0.21521786 , 0.73725677,
+#  -0.09291515 , 1.3898402 , -0.41923222, -0.10105602
+#     ], dtype=np.float32).reshape(4,4)
+
+#     Z1_expected = np.matmul(X, W.T)
+#     Z2_expected = np.matmul(X2, W2.T)
+#     Z3_expected = np.matmul(X3, W3.T)
+
+#     print("=== SOFTWARE Z ===")
+#     print(Z1_expected)
+#     print(Z2_expected)
+#     print(Z3_expected)
+#     print()
 
     # testing relu deriv
     # a = mem.alloc("a", 1)
