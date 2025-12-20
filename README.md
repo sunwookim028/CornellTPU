@@ -38,6 +38,7 @@ bram_addr = base_addr + pointer
 
 Used by compute units such as `compute_top` and the systolic array.
 
+
 - `dma_comp_addr_b [ADDR_WIDTH-1:0]`: BRAM address for compute access
 - `dma_comp_din_b [DATA_WIDTH-1:0]`: Data written by compute
 - `dma_comp_dout_b [DATA_WIDTH-1:0]`: Data read by compute
@@ -85,4 +86,23 @@ Simulation-based testing is used to verify correct BRAM behavior and compute int
 
 ## Advanced Features
 
-Our goals for advanced features of the memory subsystem include implementing **double buffering** to overlap load, compute, and store phases, expanding memory banking for higher throughput, and tighter integration with the systolic array datapath.
+Our goals for advanced features of the memory subsystem include implementing **double buffering** and **multi-banked scratchpad memory** to increase overlap and bandwidth, as well as tighter integration with the systolic array datapath.
+
+### Double Buffering
+Double buffering allows one buffer to be used for computation while another buffer is simultaneously loaded or stored by DMA, enabling overlap of:
+
+Load || Compute || Store
+
+and reducing idle cycles caused by memory transfers.
+
+### Multi-Banked Memory
+The scratchpad can be extended into multiple independent BRAM banks to increase effective memory bandwidth. Each bank supports parallel access, allowing multiple data elements to be read or written per cycle and reducing contention for compute units.
+
+### Address Translation
+To support multi-banking, logical addresses are translated into physical bank and intra-bank addresses using:
+
+bank_id = logical_addr % NUM_BANKS
+bank_address = logical_addr / NUM_BANKS
+
+This translation allows software and compute units to view the scratchpad as a contiguous address space while hardware distributes accesses evenly across memory banks.
+
