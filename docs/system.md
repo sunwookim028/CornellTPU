@@ -12,15 +12,17 @@ This section documents the architecture, programming model, and instruction set 
 
 ## Architecture
 
+![CornellTPU Architecture diagram](https://github.com/user-attachments/assets/8382725f-a695-419f-a9ef-7e9156491637)
 
-The Darker lines represent data movement (fp32 data or 64 bit instructions). tpu_mode is sent to BRAM and IRAM as based on current mode, the appropriate write enable signal must be asserted. 
 
-Diagram is not to scale.
+The Darker lines represent data movement (fp32 data or 64-bit instructions). tpu_mode is sent to BRAM and IRAM as based on the current mode, the appropriate write enable signal must be asserted. 
+
+The diagram is not to scale.
 
 
 ## AXI4-Lite Control Plane
 
-The TPU exposes a memory-mapped AXI4-Lite control interface used by the host to control execution and query status. 15 registers are available with 5 registers currently being used. All registers are 32 bits.
+The TPU exposes a memory-mapped AXI4-Lite control interface used by the host to control execution and query status. 15 registers are available, with 5 registers currently being used. All registers are 32 bits.
 
 | Offset | Name          | Access | Description |
 |--------|---------------|--------|-------------|
@@ -44,7 +46,7 @@ The TPU exposes a memory-mapped AXI4-Lite control interface used by the host to 
 
 #### tpu_mode (0x00)
 
-This register configures the tpu's operating mode. Only bits **[2:0]** are used, upper bits reserved and read as zero. Can configure to the following operating modes:
+This register configures the tpu's operating mode. Only bits **[2:0]** are used, upper bits reserved and read as zero. Can be configured to the following operating modes:
 
 | Value | Mode        | Description |
 |-------|-------------|-------------|
